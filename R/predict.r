@@ -38,7 +38,7 @@ predict_h_index <- function(id, journals) {
   id <- tidy_id(id)
   n <- get_num_articles(id) # number of articles written
   h <- get_profile(id)
-  if (is.na(h)) return(NA)
+  if (is.na(h$h_index)) return(NA)
   h <- h$h_index
 
   y <- as.numeric(format(Sys.Date(), "%Y")) - get_oldest_article(id)

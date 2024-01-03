@@ -1,5 +1,6 @@
-# scholar 0.2.4.001
+# scholar 0.2.4.002
 
++ bug fixed in `predict_h_index()` (2024-01-3, Wed)
 + update vignette and readme with `format_publications()` function (2022-08-09, Tue, @rempsyc, #1)
 
 # scholar 0.2.4
