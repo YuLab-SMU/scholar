@@ -19,11 +19,11 @@ research interests, homepage and coauthors.
 
 Metrics include:
 \itemize{
- \item {total_cites}   {combined citations to all publications}
- \item {h_index}       {the largest number h such that h publications each have at least h citations}
- \item {i10_index}     {the number of publications that each have at least 10 citations}
- \item {available}     {the number of publications that have a version online that can be read for free (though not necessarily reusable under an open access license)}
- \item {not_available} {the number of publications only available behind a paywall}
+ \item {total_cites}   combined citations to all publications
+ \item {h_index}       the largest number h such that h publications each have at least h citations
+ \item {i10_index}     the number of publications that each have at least 10 citations
+ \item {available}     the number of publications that have a version online that can be read for free (though not necessarily reusable under an open access license)
+ \item {not_available} the number of publications only available behind a paywall
 }
 }
 \description{

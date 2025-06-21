@@ -89,7 +89,7 @@ ach <- get_article_cite_history(id, p$pubid[1])
 
 ## Plot citation trend
 ggplot(ach, aes(year, cites)) +
-    geom_segment(aes(xend = year, yend = 0), size=1, color='darkgrey') +
+    geom_segment(aes(xend = year, yend = 0), linewidth=1, color='darkgrey') +
     geom_point(size=3, color='firebrick')
 ```
 
@@ -107,12 +107,16 @@ cs <- compare_scholars(ids)
 
 ## remove some 'bad' records without sufficient information
 cs <- subset(cs, !is.na(year) & year > 1900)
-ggplot(cs, aes(year, cites, group=name, color=name)) + geom_line() + theme(legend.position="bottom")
+ggplot(cs, aes(year, cites, group=name, color=name)) + 
+  geom_line() + theme(legend.position="bottom")
 
 ## Compare their career trajectories, based on year of first citation
 csc <- compare_scholar_careers(ids)
-ggplot(csc, aes(career_year, cites, group=name, color=name)) + geom_line() + geom_point() +
-    theme(legend.position=c(.2, .8))
+ggplot(csc, aes(career_year, cites, group=name, color=name)) + 
+  geom_line() + geom_point() +
+  theme(legend.position = "inside", 
+    legend.position.inside=c(.2, .8)
+  )
 ```
 
 # Visualizing and comparing network of coauthors

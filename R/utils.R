@@ -40,8 +40,8 @@ tidy_id <- function(id) {
 #' @param url URL to fetch
 #' @param attempts_left The number of times to try and fetch the page
 #'
-#' @return an \code{httr::\link{response}} object
-#' @seealso \code{httr::\link{GET}}
+#' @return an [response][httr::response] object
+#' @seealso [GET][httr::GET]
 #' @export
 get_scholar_resp <- function(url, attempts_left = 5) {
 

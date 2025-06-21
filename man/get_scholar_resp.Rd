@@ -12,12 +12,12 @@ get_scholar_resp(url, attempts_left = 5)
 \item{attempts_left}{The number of times to try and fetch the page}
 }
 \value{
-an \code{httr::\link{response}} object
+an [response][httr::response] object
 }
 \description{
 see \code{\link{scholar-package}} documentation for details about Scholar
 session cookies.
 }
 \seealso{
-\code{httr::\link{GET}}
+[GET][httr::GET]
 }

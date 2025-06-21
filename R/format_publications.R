@@ -15,8 +15,7 @@
 ##' @author R Thériault and modified by Guangchuang Yu
 format_publications <- function(scholar.profile, author.name = NULL) {
   pubs <- get_publications(scholar.profile)
-  pubs2 <- pubs %>% 
-    strsplit(x = .$author, split = ",") 
+  pubs2 <- strsplit(pubs$author, split = ",") 
   
   pubs$author <- lapply(pubs2, function(x) {
     x <- swap_initials(x)
@@ -27,13 +26,13 @@ format_publications <- function(scholar.profile, author.name = NULL) {
 
   author.name2 <- swap_initials(author.name)
   
-  res <- pubs %>% 
-    arrange(desc(.data$year)) %>%
+  res <- pubs |> 
+    arrange(desc(.data$year)) |>
     mutate(journal = paste0("*", .data$journal, "*"),
            Publications = paste0(.data$author, " (", .data$year, "). ", 
                                  .data$title, ". ", .data$journal, ". ", 
                                  .data$number)
-    ) %>% 
+    ) |>
     pull(.data$Publications)
 
     if (is.null(author.name2)) return(res)
