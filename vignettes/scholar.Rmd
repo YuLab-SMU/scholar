@@ -145,12 +145,11 @@ The `format_publications` function can be used for example in conjunction with t
 ### APA style
 
 ```{r  results = "asis"}
-format_publications("NrfwEncAAAAJ", "R Thériault") |> cat(sep='\n\n')
-
+format_publications("DO5oG40AAAAJ", "Guangchuang Yu") |> head() |> cat(sep='\n\n')
 ```
 
 ### Numbering format
 
 ```{r  results = "asis"}
-format_publications("NrfwEncAAAAJ", "R Thériault") |> print(quote=FALSE)
+format_publications("DO5oG40AAAAJ", "Guangchuang Yu") |> head() |> print(quote=FALSE)
 ```

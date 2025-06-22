@@ -15,11 +15,6 @@ The \code{scholar} package provides functions to extract citation data from
 Google Scholar.  There are also convenience functions for comparing multiple
 scholars and predicting h-index scores based on past publication records.
 }
-\note{
-A complementary set of Google Scholar functions can be found at
-  \url{https://www.biostat.jhsph.edu/~jleek/code/googleCite.r}.  The
-  \code{scholar} package was developed independently.
-}
 \section{Google Scholar cookies}{
  Google does not encourage people to use the
   scholar website as an API. You will find a number of issues related to this
