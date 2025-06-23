@@ -233,7 +233,7 @@ get_oldest_article <- function(id) {
 # ##' \dontrun{
 # ##' library(scholar)
 # ##'
-# ##' id <- get_publications("bg0BZ-QAAAAJ&hl")
+# ##' id <- get_publications("DO5oG40AAAAJ")
 # ##' impact <- get_impactfactor(journals=id$journal, max.distance = 0.1)
 # ##'
 # ##' id <- cbind(id, impact)

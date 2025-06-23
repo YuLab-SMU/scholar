@@ -1,8 +1,12 @@
 citHeader("To cite scholar in publications, please use:")
 
 
-bibentry(entry = "manual",
-  author = "Guangchuang Yu and James Keirstead",
+bibentry(
+  bibtype = "manual",
+  author = c(
+          person("Guangchuang", "Yu"),
+          person("James", "Keirstead")
+    ),
   title = "scholar: analyse citation data from Google Scholar",
   year = "2024",
   note = "R package version 0.2.5",

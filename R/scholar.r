@@ -52,6 +52,7 @@ get_profile <- function(id) {
     page <- page %>% read_html()
     tables <- page %>% html_table()
 
+  if (length(tables) == 0) return(NA)
     
   ## The citation stats are in tables[[1]]$tables$stats
   ## but the number of rows seems to vary by OS
@@ -205,14 +206,16 @@ get_num_top_journals <- function(id, journals) {
 ##' Get author rank in authors list.
 ##'
 ##' @examples
+##' \dontrun{
 ##' library(scholar)
 ##'
-##' id <- "bg0BZ-QAAAAJ&hl"
+##' id <- "DO5oG40AAAAJ"
 ##'
 ##' authorlist <- scholar::get_publications(id)$author
 ##' author <- scholar::get_profile(id)$name
 ##'
 ##' author_position(authorlist, author)
+##' }
 ##'
 ##' @param authorlist list of publication authors
 ##' @param author author's name to look for

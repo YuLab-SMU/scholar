@@ -8,8 +8,9 @@ rd:
 	Rscript -e 'roxygen2::roxygenise(".")'
 
 build:
-	cd ..;\
-	R CMD build $(PKGSRC)
+	## cd ..;\
+	## R CMD build $(PKGSRC)
+	Rscript -e 'devtools::build()'
 
 build2:
 	cd ..;\
@@ -19,10 +20,11 @@ install:
 	cd ..;\
 	R CMD INSTALL $(PKGNAME)_$(PKGVERS).tar.gz
 
-check: build
-	cd ..;\
-	Rscript -e 'rcmdcheck::rcmdcheck("$(PKGNAME)_$(PKGVERS).tar.gz", args="--as-cran --run-donttest")'
-
+check: #build
+	## cd ..;\
+	## Rscript -e 'rcmdcheck::rcmdcheck("$(PKGNAME)_$(PKGVERS).tar.gz", args="--as-cran --run-donttest")'
+	Rscript -e 'devtools::check()'
+	
 check2: build
 	cd ..;\
 	R CMD check --run-donttest $(PKGNAME)_$(PKGVERS).tar.gz

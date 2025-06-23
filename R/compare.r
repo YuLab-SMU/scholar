@@ -12,19 +12,30 @@ utils::globalVariables(c("id", "year", "cites"))
 ##' fetch for each scholar
 ##' @return a data frame giving the ID of each scholar and the total
 ##' number of citations received by work published in a year.
-##' @examples {
-##' \donttest{
+##' @examples 
+##' \dontrun{
 ##'     ## How do Richard Feynmann and Stephen Hawking compare?
 ##'     ids <- c("B7vSqZsAAAAJ", "qj74uXkAAAAJ")
 ##'     df <- compare_scholars(ids)
 ##' }
-##' }
+##' 
 ##' @export
 ##' @importFrom dplyr "%>%" summarize mutate group_by
 compare_scholars <- function(ids, pagesize=100) {
 
     ## Load in the publication data and summarize
-    data <- lapply(ids, function(x) cbind(id=x, get_publications(x, pagesize=pagesize)))
+    # data <- lapply(ids, function(x) cbind(id=x, get_publications(x, pagesize=pagesize)))
+    data <- lapply(ids, function(x) {
+        d <- get_publications(x, pagesize=pagesize)
+        if (nrow(d) > 1) {
+            d$id <- x
+            return(d)
+        } 
+
+        return(NULL)
+    })
+
+
     data <- do.call("rbind", data)
     data <- data %>% group_by(id, year) %>%
         summarize(cites=sum(cites, na.rm=TRUE)) %>%
@@ -33,6 +44,7 @@ compare_scholars <- function(ids, pagesize=100) {
     ## Fetch the scholar names
     names <- lapply(ids, function(i) {
         p <- get_profile(i)
+        if (length(p) <= 1 && is.na(p)) return(NULL)
         data.frame(id=p$id, name=p$name)
     })
     names <- do.call("rbind", names)

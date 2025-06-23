@@ -18,14 +18,16 @@ dataframe with author's position and normalized position (a normalized index, wi
 Get author rank in authors list.
 }
 \examples{
+\dontrun{
 library(scholar)
 
-id <- "bg0BZ-QAAAAJ&hl"
+id <- "DO5oG40AAAAJ"
 
 authorlist <- scholar::get_publications(id)$author
 author <- scholar::get_profile(id)$name
 
 author_position(authorlist, author)
+}
 
 }
 \author{

@@ -22,11 +22,10 @@ compiles a data frame comparing the citations received by each of
 the scholar's publications by year of publication.
 }
 \examples{
-{
-\donttest{
+\dontrun{
     ## How do Richard Feynmann and Stephen Hawking compare?
     ids <- c("B7vSqZsAAAAJ", "qj74uXkAAAAJ")
     df <- compare_scholars(ids)
 }
-}
+
 }
