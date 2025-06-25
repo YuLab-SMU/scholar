@@ -36,15 +36,7 @@ theme_set(theme_minimal())
 id <- 'B7vSqZsAAAAJ'
 
 ## Get his profile
-l <- get_profile(id)
-
-## Print his name and affiliation
-l$name
-l$affiliation
-
-## Print his citation index
-l$h_index
-l$i10_index
+get_profile(id)
 ```
 
 # Retrieving publications

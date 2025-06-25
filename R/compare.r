@@ -79,9 +79,18 @@ compare_scholars <- function(ids, pagesize=100) {
 ##' @importFrom dplyr "%>%" group_by mutate
 compare_scholar_careers <- function(ids, career=TRUE) {
 
-    data <- lapply(ids, function(x) return(cbind(id=x, get_citation_history(x))))
+    # data <- lapply(ids, function(x) return(cbind(id=x, get_citation_history(x))))
+    data <- lapply(ids, function(x) {
+        d <- get_citation_history(x)
+        if (is.null(d) || nrow(d) == 0) {
+            d <- NULL
+        } else {
+            d$id <- x
+        }
+        return(d)
+    })
     data <- do.call("rbind", data)
-
+    
     ## Calculate the minimum year for each scholar and create a career year
     if (career) {
         data <- data %>% group_by(id) %>%
