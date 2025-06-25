@@ -21,6 +21,7 @@ utils::globalVariables(c("id", "year", "cites"))
 ##' 
 ##' @export
 ##' @importFrom dplyr "%>%" summarize mutate group_by
+##' @importFrom rlang .data
 compare_scholars <- function(ids, pagesize=100) {
 
     ## Load in the publication data and summarize
@@ -35,11 +36,12 @@ compare_scholars <- function(ids, pagesize=100) {
         return(NULL)
     })
 
+    if (all(sapply(data, is.null))) return(NULL)
 
     data <- do.call("rbind", data)
-    data <- data %>% group_by(id, year) %>%
-        summarize(cites=sum(cites, na.rm=TRUE)) %>%
-            mutate(total=cumsum(cites))
+    data <- data %>% group_by(.data$id, .data$year) %>%
+        summarize(cites=sum(.data$cites, na.rm=TRUE)) %>%
+            mutate(total=cumsum(.data$cites))
 
     ## Fetch the scholar names
     names <- lapply(ids, function(i) {
@@ -69,12 +71,12 @@ compare_scholars <- function(ids, pagesize=100) {
 ##' measuring the year relative to the first citation year.  Default =
 ##' TRUE
 ##'
-##' @examples {
-##'     ## How do Richard Feynmann and Stephen Hawking compare?
-##'     # Compare Feynman and Stephen Hawking
-##'     ids <- c("B7vSqZsAAAAJ", "qj74uXkAAAAJ")
-##'     df <- compare_scholar_careers(ids)
-##' }
+##' @examples 
+##'   ## How do Richard Feynmann and Stephen Hawking compare?
+##'   # Compare Feynman and Stephen Hawking
+##'   ids <- c("B7vSqZsAAAAJ", "qj74uXkAAAAJ")
+##'   df <- compare_scholar_careers(ids)
+##' 
 ##' @export
 ##' @importFrom dplyr "%>%" group_by mutate
 compare_scholar_careers <- function(ids, career=TRUE) {
@@ -89,12 +91,17 @@ compare_scholar_careers <- function(ids, career=TRUE) {
         }
         return(d)
     })
+
+    if (all(sapply(data, is.null))) {
+        return(NULL)
+    }
+    
     data <- do.call("rbind", data)
     
     ## Calculate the minimum year for each scholar and create a career year
     if (career) {
-        data <- data %>% group_by(id) %>%
-            mutate(career_year=year-min(year))
+        data <- data %>% group_by(.data$id) %>%
+            mutate(career_year=.data$year-min(.data$year))
     }
 
     ## Fetch the scholar names

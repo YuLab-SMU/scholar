@@ -34,7 +34,7 @@ Suggests:
     prettydoc,
     roxygen2,
     testthat (>= 2.1.0),
-    spelling
+    yulab.utils
 VignetteBuilder: knitr
 License: MIT + file LICENSE
 URL: https://github.com/YuLab-SMU/scholar

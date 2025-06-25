@@ -14,15 +14,18 @@ vignette: >
   %\VignetteEngine{knitr::rmarkdown}
   %\usepackage[utf8]{inputenc}
   %\VignetteDepends{ggplot2}
+  %\VignetteDepends{yulab.utils}
 ---
 
 ```{r style, echo=FALSE, results="asis", message=FALSE}
 knitr::opts_chunk$set(tidy = FALSE,
 		   message = FALSE)
+
+has_scholar <- yulab.utils::has_internet("https://scholar.google.com") 
 ```
 
 
-```{r echo=FALSE, results="hide", message=FALSE}
+```{r echo=FALSE, results="hide", message=FALSE, eval=has_scholar}
 library("scholar")
 library("ggplot2")
 theme_set(theme_minimal())
@@ -31,7 +34,7 @@ theme_set(theme_minimal())
 
 # Retrieving basic information
 
-```{r}
+```{r eval=has_scholar}
 ## Define the id for Richard Feynman
 id <- 'B7vSqZsAAAAJ'
 
@@ -49,7 +52,7 @@ number*, *citation number*, *publication year*, *etc.*.
 The `pubid` is the article ID used by Google Scholar and the identifier
 that is used to retrieve the citation history of a selected publication.
 
-```{r}
+```{r eval=has_scholar}
 ## Get his publications (a large data frame)
 p <- get_publications(id)
 head(p, 3)
@@ -58,7 +61,7 @@ head(p, 3)
 
 # Retrieving citation data
 
-```{r}
+```{r eval=has_scholar}
 ## Get his citation history, i.e. citations to his work in a given year
 ct <- get_citation_history(id)
 
@@ -72,7 +75,7 @@ Users can retrieve the citation history of a particular publication with
 `get_article_cite_history()`.
 
 
-```{r}
+```{r eval=has_scholar}
 ## The following publication will be used to demonstrate article citation history
 as.character(p$title[1])
 
@@ -89,7 +92,7 @@ ggplot(ach, aes(year, cites)) +
 
 You can compare the citation history of scholars by fetching data with 
 `compare_scholars`.
-```{r}
+```{r eval=has_scholar}
 # Compare Feynman and Stephen Hawking
 ids <- c('B7vSqZsAAAAJ', 'qj74uXkAAAAJ')
 
@@ -98,7 +101,7 @@ ids <- c('B7vSqZsAAAAJ', 'qj74uXkAAAAJ')
 cs <- compare_scholars(ids)
 
 ## remove some 'bad' records without sufficient information
-cs <- subset(cs, !is.na(year) & year > 1900)
+cs <- dplyr::filter(cs, !is.na(year) & year > 1900) 
 ggplot(cs, aes(year, cites, group=name, color=name)) + 
   geom_line() + theme(legend.position="bottom")
 
@@ -113,7 +116,7 @@ ggplot(csc, aes(career_year, cites, group=name, color=name)) +
 
 # Visualizing and comparing network of coauthors
 
-```{r}
+```{r eval=has_scholar}
 # Be careful with specifying too many coauthors as the visualization of the
 # network can get very messy.
 coauthor_network <- get_coauthors('amYIKXQAAAAJ&hl', n_coauthors = 7)
@@ -124,7 +127,7 @@ coauthor_network
 
 And then we have a built-in function to plot this visualization.
 
-```{r}
+```{r eval=has_scholar}
 plot_coauthors(coauthor_network)
 ```
 
@@ -136,12 +139,12 @@ The `format_publications` function can be used for example in conjunction with t
 
 ### APA style
 
-```{r  results = "asis"}
+```{r results = "asis", eval=has_scholar}
 format_publications("DO5oG40AAAAJ", "Guangchuang Yu") |> head() |> cat(sep='\n\n')
 ```
 
 ### Numbering format
 
-```{r  results = "asis"}
+```{r results = "asis", eval=has_scholar}
 format_publications("DO5oG40AAAAJ", "Guangchuang Yu") |> head() |> print(quote=FALSE)
 ```

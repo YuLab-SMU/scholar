@@ -157,6 +157,8 @@ get_publications <- function(id, cstart = 0, cstop = Inf, pagesize=100, flush=FA
 ##' @importFrom rvest html_nodes html_attr html_text
 ##' @export
 get_article_cite_history <- function (id, article) {
+    dummy_output <- data.frame(year=1, cites=1, pubid='a')
+    dummy_output <- dummy_output[-1, ]
 
     site <- getOption("scholar_site")
     id <- tidy_id(id)
@@ -166,7 +168,7 @@ get_article_cite_history <- function (id, article) {
     url <- paste0(url_base, url_tail)
 
     res <- get_scholar_resp(url)
-    if (is.null(res)) return(NA)
+    if (is.null(res)) return(dummy_output)
 
     httr::stop_for_status(res, "get user id / article information")
     doc <- read_html(res)

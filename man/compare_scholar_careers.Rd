@@ -23,10 +23,9 @@ directly, i.e. relative to the first year in which their
 publications are cited.
 }
 \examples{
-{
-    ## How do Richard Feynmann and Stephen Hawking compare?
-    # Compare Feynman and Stephen Hawking
-    ids <- c("B7vSqZsAAAAJ", "qj74uXkAAAAJ")
-    df <- compare_scholar_careers(ids)
-}
+  ## How do Richard Feynmann and Stephen Hawking compare?
+  # Compare Feynman and Stephen Hawking
+  ids <- c("B7vSqZsAAAAJ", "qj74uXkAAAAJ")
+  df <- compare_scholar_careers(ids)
+
 }
