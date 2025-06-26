@@ -33,6 +33,7 @@ Suggests:
     rmarkdown,
     prettydoc,
     roxygen2,
+    spelling,
     testthat (>= 2.1.0),
     yulab.utils
 VignetteBuilder: knitr

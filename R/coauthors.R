@@ -23,7 +23,7 @@
 #' \dontrun{
 #'
 #' library(scholar)
-#' coauthor_network <- get_coauthors('amYIKXQAAAAJ&hl')
+#' coauthor_network <- get_coauthors('amYIKXQAAAAJ')
 #' plot_coauthors(coauthor_network)
 #' }
 #'
@@ -105,20 +105,19 @@ plot_coauthors <- function(network, size_labels = 5) {
 # Extract the coauthors of an id and
 # only return the names of the author and coauthors
 list_coauthors <- function(id, n_coauthors) {
-    site <- getOption("scholar_site")
-    url_template <- paste0(site, "/citations?hl=en&user=%s")
-    url <- compose_url(id, url_template)
-    
-    if (id == "" | is.na(id)) {
-        return(
-            data.frame(author = character(),
+    dummy_output <- data.frame(author = character(),
                        author_href = character(),
                        coauthors = character(),
                        coauthors_url = character()
-            )
-        )
+                    )
+    if (id == "" | is.na(id)) {
+        return(dummy_output)
     }
-    
+
+    site <- getOption("scholar_site")
+    url_template <- paste0(site, "/citations?hl=en&user=%s")
+    url <- compose_url(id, url_template)
+
     resp <- get_scholar_resp(url, 5)
     
     google_scholar <- httr::content(resp)
@@ -128,6 +127,8 @@ list_coauthors <- function(id, n_coauthors) {
             xml2::xml_find_all(google_scholar,
                                xpath = "//div[@id = 'gsc_prf_in']")
         )
+    
+    if (length(author_name) == 0) return(dummy_output)
     
     # Do no grab the text of the node yet because I need to grab the
     # href below.
@@ -154,13 +155,15 @@ list_coauthors <- function(id, n_coauthors) {
             FUN.VALUE = character(1)
         )
     
+    if (length(coauthors) != length(coauthor_urls)) {
+        return(dummy_output)    
+    }
+
     data.frame(
         author = author_name,
         author_url = url,
         coauthors = coauthors,
-        coauthors_url = coauthor_urls,
-        stringsAsFactors = FALSE,
-        row.names = NULL
+        coauthors_url = coauthor_urls
     )
 }
 

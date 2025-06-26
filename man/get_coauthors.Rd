@@ -34,7 +34,7 @@ not from all publications.
 \dontrun{
 
 library(scholar)
-coauthor_network <- get_coauthors('amYIKXQAAAAJ&hl')
+coauthor_network <- get_coauthors('amYIKXQAAAAJ')
 plot_coauthors(coauthor_network)
 }
 

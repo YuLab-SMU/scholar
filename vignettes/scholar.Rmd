@@ -99,14 +99,40 @@ ids <- c('B7vSqZsAAAAJ', 'qj74uXkAAAAJ')
 # Get a data frame comparing the number of citations to their work in
 # a given year
 cs <- compare_scholars(ids)
+```
 
+```{r echo=FALSE, results="hide", message=FALSE}
+has_cs <- FALSE
+
+if (has_scholar && !is.null(cs)) {
+  has_cs <- TRUE
+}
+```
+
+
+```{r eval=has_cs}
 ## remove some 'bad' records without sufficient information
 cs <- dplyr::filter(cs, !is.na(year) & year > 1900) 
+
 ggplot(cs, aes(year, cites, group=name, color=name)) + 
   geom_line() + theme(legend.position="bottom")
+```
 
+```{r eval=has_scholar}
 ## Compare their career trajectories, based on year of first citation
 csc <- compare_scholar_careers(ids)
+```
+
+```{r echo=FALSE, results="hide", message=FALSE}
+has_csc <- FALSE
+
+if (has_scholar && !is.null(csc)) {
+  has_csc <- TRUE
+}
+```
+
+
+```{r eval=has_csc}
 ggplot(csc, aes(career_year, cites, group=name, color=name)) + 
   geom_line() + geom_point() +
   theme(legend.position = "inside", 
@@ -119,15 +145,22 @@ ggplot(csc, aes(career_year, cites, group=name, color=name)) +
 ```{r eval=has_scholar}
 # Be careful with specifying too many coauthors as the visualization of the
 # network can get very messy.
-coauthor_network <- get_coauthors('amYIKXQAAAAJ&hl', n_coauthors = 7)
+coauthor_network <- get_coauthors('DO5oG40AAAAJ', n_coauthors = 4)
 
 coauthor_network
 ```
 
+```{r echo=FALSE, results="hide", message=FALSE}
+has_coauthor <- FALSE
+
+if (has_scholar && (nrow(coauthor_network) > 1)) {
+  has_coauthor <- TRUE
+}
+```
 
 And then we have a built-in function to plot this visualization.
 
-```{r eval=has_scholar}
+```{r eval=has_coauthor}
 plot_coauthors(coauthor_network)
 ```
 

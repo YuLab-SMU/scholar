@@ -338,7 +338,7 @@ get_scholar_id <- function(last_name="", first_name="", affiliation = NA) {
     unique
   
   if (length(ids) > 1) {
-    profiles <- lapply(ids, scholar::get_profile)
+    profiles <- lapply(ids, get_profile)
     if (is.na(affiliation)) {
       x_profile <- profiles[[1]]
       warning("Selecting first out of ", length(profiles), " candidate matches.")
@@ -357,7 +357,7 @@ get_scholar_id <- function(last_name="", first_name="", affiliation = NA) {
       }
     }
   } else {
-    x_profile <- scholar::get_profile(id = ids)
+    x_profile <- get_profile(id = ids)
   }
   return(x_profile$id)
 }
