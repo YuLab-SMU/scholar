@@ -15,7 +15,7 @@ utils::globalVariables(c("id", "year", "cites"))
 ##' @examples 
 ##' \dontrun{
 ##'     ## How do Richard Feynmann and Stephen Hawking compare?
-##'     ids <- c("B7vSqZsAAAAJ", "qj74uXkAAAAJ")
+##'     ids <- c("B7vSqZsAAAAJ", "DO5oG40AAAAJ")
 ##'     df <- compare_scholars(ids)
 ##' }
 ##' 
@@ -74,7 +74,7 @@ compare_scholars <- function(ids, pagesize=100) {
 ##' @examples 
 ##'   ## How do Richard Feynmann and Stephen Hawking compare?
 ##'   # Compare Feynman and Stephen Hawking
-##'   ids <- c("B7vSqZsAAAAJ", "qj74uXkAAAAJ")
+##'   ids <- c("B7vSqZsAAAAJ", "DO5oG40AAAAJ")
 ##'   df <- compare_scholar_careers(ids)
 ##' 
 ##' @export

@@ -24,7 +24,7 @@ the scholar's publications by year of publication.
 \examples{
 \dontrun{
     ## How do Richard Feynmann and Stephen Hawking compare?
-    ids <- c("B7vSqZsAAAAJ", "qj74uXkAAAAJ")
+    ids <- c("B7vSqZsAAAAJ", "DO5oG40AAAAJ")
     df <- compare_scholars(ids)
 }
 

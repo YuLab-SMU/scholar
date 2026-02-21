@@ -25,7 +25,7 @@ publications are cited.
 \examples{
   ## How do Richard Feynmann and Stephen Hawking compare?
   # Compare Feynman and Stephen Hawking
-  ids <- c("B7vSqZsAAAAJ", "qj74uXkAAAAJ")
+  ids <- c("B7vSqZsAAAAJ", "DO5oG40AAAAJ")
   df <- compare_scholar_careers(ids)
 
 }

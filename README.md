@@ -47,7 +47,7 @@ You can also compare multiple scholars, as shown below.  Note that these two par
 
 ```
 # Compare Feynman and Stephen Hawking
-ids <- c('B7vSqZsAAAAJ', 'qj74uXkAAAAJ')
+ids <- c('B7vSqZsAAAAJ', 'DO5oG40AAAAJ')
 
 # Get a data frame comparing the number of citations to their work in
 # a given year 

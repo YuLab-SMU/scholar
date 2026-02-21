@@ -32,7 +32,7 @@ utils::globalVariables(c("name"))
 ##'
 ##' @examples {
 ##'    ## Gets profiles of some famous physicists
-##'    ids <- c("xJaxiEEAAAAJ", "qj74uXkAAAAJ")
+##'    ids <- c("xJaxiEEAAAAJ", "DO5oG40AAAAJ")
 ##'    profiles <- lapply(ids, get_profile)
 ##' }
 ##' @export

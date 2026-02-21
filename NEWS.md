@@ -1,3 +1,7 @@
+# scholar 0.2.6
+
++ updated scholar IDs in examples to fix R check warnings (2026-02-21, Sat)
+
 # scholar 0.2.5
 
 + bug fixed in `format_publications()` and fixed R check (2025-06-21, Sat)
