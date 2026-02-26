@@ -1,5 +1,6 @@
 # scholar 0.2.6
 
++ fix `get_publications(sortby='year')` issue (2026-02-26, Thu, #5)
 + enhance get_scholar_id search with multiple mauthors query variants (2026-02-26, Thu)
 + fix get_scholar_id to robustly parse author search results (2026-02-26, Thu, #4)
 + fix get_scholar_id query encoding to use '+' for spaces and '%22' for quotes (2026-02-26, Thu)

@@ -133,7 +133,7 @@ get_publications <- function(id, cstart = 0, cstop = Inf, pagesize=100, flush=FA
         }
 
         if (nrow(data) > 0 && nrow(data)==pagesize) {
-            data <- rbind(data, get_publications(id, cstart=cstart+pagesize, pagesize=pagesize))
+            data <- rbind(data, get_publications(id, cstart=cstart+pagesize, pagesize=pagesize, sortby=sortby))
         }
 
         ## Save it after everything has been retrieved.
