@@ -1,6 +1,10 @@
 # scholar 0.2.6
 
-+ updated scholar IDs in examples to fix R check warnings (2026-02-21, Sat)
++ enhance get_scholar_id search with multiple mauthors query variants (2026-02-26, Thu)
++ fix get_scholar_id to robustly parse author search results (2026-02-26, Thu, #4)
++ fix get_scholar_id query encoding to use '+' for spaces and '%22' for quotes (2026-02-26, Thu)
++ add fallback parsing for user%3D and JSON/data-user formats; improve messages (2026-02-26, Thu)
++ updated scholar IDs in compare_scholars examples and vignette to fix R check warnings (2026-02-21, Sat)
 
 # scholar 0.2.5
 

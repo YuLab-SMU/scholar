@@ -28,12 +28,11 @@ compare_scholars <- function(ids, pagesize=100) {
     # data <- lapply(ids, function(x) cbind(id=x, get_publications(x, pagesize=pagesize)))
     data <- lapply(ids, function(x) {
         d <- get_publications(x, pagesize=pagesize)
-        if (nrow(d) > 1) {
-            d$id <- x
-            return(d)
-        } 
-
-        return(NULL)
+        if (is.null(d) || nrow(d) == 0) {
+            return(NULL)
+        }
+        d$id <- x
+        return(d)
     })
 
     if (all(sapply(data, is.null))) return(NULL)
@@ -46,13 +45,14 @@ compare_scholars <- function(ids, pagesize=100) {
     ## Fetch the scholar names
     names <- lapply(ids, function(i) {
         p <- get_profile(i)
-        if (length(p) <= 1 && is.na(p)) return(NULL)
+        if (is.null(p) || length(p) == 0) return(NULL)
         data.frame(id=p$id, name=p$name)
     })
-    names <- do.call("rbind", names)
+    names <- Filter(Negate(is.null), names)
+    names <- if (length(names) > 0) do.call("rbind", names) else NULL
 
     ## Merge together with the citation info
-    final <- merge(data, names)
+    final <- if (!is.null(names)) merge(data, names) else data
     return(final)
 }
 

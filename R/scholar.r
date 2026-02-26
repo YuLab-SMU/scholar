@@ -306,37 +306,74 @@ get_scholar_id <- function(last_name="", first_name="", affiliation = NA) {
     stop("At least one of first and last name must be specified!")
 
   site <- getOption("scholar_site")
-  url <- paste0(
-      site,
-      '/citations?view_op=search_authors&mauthors=',
-      first_name,
-      '+',
-      last_name,
-      '&hl=en&oi=ao'
+  queries <- c(
+    paste(first_name, last_name),
+    paste(last_name, first_name),
+    paste0('"', first_name, ' ', last_name, '"'),
+    paste0('"', last_name, ' ', first_name, '"')
   )
-  page <- get_scholar_resp(url)
-  if (is.null(page)) return(NA)
+  if (!is.na(affiliation)) {
+    queries <- c(
+      queries,
+      paste(first_name, last_name, affiliation),
+      paste(last_name, first_name, affiliation)
+    )
+  }
+  queries <- unique(queries[nzchar(queries)])
 
-  aa <- content(page, as='text')
-  ids <- stringr::str_extract_all(
-      string = aa, 
-      pattern = ";user=[0-9a-zA-Z_\\-]+"
+  ids <- character(0)
+  for (q in queries) {
+    mval <- q
+    mval <- gsub('"', '%22', mval)
+    mval <- gsub(' ', '+', mval)
+    url <- paste0(site, '/citations?view_op=search_authors&mauthors=', mval, '&hl=en&oi=ao')
+    page <- get_scholar_resp(url)
+    if (is.null(page)) next
+    aa <- httr::content(page, as='text')
+    doc <- xml2::read_html(aa)
+    hrefs <- rvest::html_nodes(doc, css = ".gs_ai_name a") |> rvest::html_attr("href")
+    if (length(hrefs) == 0) {
+      hrefs <- rvest::html_nodes(doc, xpath = "//a[contains(@href,'citations')][contains(@href,'user=')]") |> rvest::html_attr("href")
+    }
+    cur_ids <- vapply(hrefs, grab_id, FUN.VALUE = character(1))
+    cur_ids <- cur_ids[!is.na(cur_ids) & nzchar(cur_ids)]
+    if (length(cur_ids) == 0) {
+      # Try multiple encodings/patterns that Google may use
+      patterns <- c(
+        "user=[0-9A-Za-z_\\-]+",
+        "user%3D[0-9A-Za-z_\\-]+",
+        '"user":"[0-9A-Za-z_\\-]+"',
+        "data-user=\"[0-9A-Za-z_\\-]+\""
       )
-    #stringr::str_extract_all(string = aa, pattern = ";user=[[:alnum:]]+[[:punct:]]")
-  # maybe pattern = ";user=[^&|\"]+[&|\"]") is more safe
-  # see also https://github.com/jkeirstead/scholar/issues/111
+      hits <- unlist(lapply(patterns, function(pt) {
+        stringr::str_extract_all(string = aa, pattern = pt)
+      }))
+      if (length(hits) > 0) {
+        hits <- unique(hits)
+        hits <- gsub('^user=', '', hits)
+        hits <- gsub('^user%3D', '', hits)
+        hits <- gsub('^\"user\":\"', '', hits)
+        hits <- gsub('^data-user=\"', '', hits)
+        hits <- gsub('\"$', '', hits)
+        cur_ids <- unique(hits)
+      } else {
+        cur_ids <- character(0)
+      }
+    }
+    ids <- unique(c(ids, cur_ids))
+    if (length(ids) > 0) break
+  }
 
-
-  if (length(unlist(ids)) == 0) {
-    message("No Scholar ID found.")
+  if (length(ids) == 0) {
+    # Heuristic: detect sign-in/verification pages and give informative message
+    if (grepl("Sign into continue|I'm not a robot|verify", aa, ignore.case = TRUE)) {
+      message("Author search page requires sign-in/verification; cannot extract ID from this environment.")
+    } else {
+      message("No Scholar ID found.")
+    }
     return(NA)
   }
-  
-  ids <- ids %>%
-    unlist %>%
-    gsub(";user=|[[:punct:]]$", "", .) %>%
-    unique
-  
+
   if (length(ids) > 1) {
     profiles <- lapply(ids, get_profile)
     if (is.na(affiliation)) {
