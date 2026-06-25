@@ -49,7 +49,7 @@ get_profile <- function(id) {
     page <- get_scholar_resp(url)
     if (is.null(page)) return(NA)
 
-    page <- page %>% read_html()
+    page <- page %>% read_scholar_html()
     tables <- page %>% html_table()
 
   if (length(tables) == 0) return(NA)
@@ -131,7 +131,7 @@ get_citation_history <- function(id) {
   page <- get_scholar_resp(url)
   if (is.null(page)) return(dummy_output)
 
-    page <- page %>% read_html()
+    page <- page %>% read_scholar_html()
     years <- page %>% html_nodes(xpath="//*/span[@class='gsc_g_t']") %>%
         html_text() %>% as.numeric()
     vals <- page %>% html_nodes(xpath="//*/span[@class='gsc_g_al']") %>%
@@ -329,7 +329,13 @@ get_scholar_id <- function(last_name="", first_name="", affiliation = NA) {
     url <- paste0(site, '/citations?view_op=search_authors&mauthors=', mval, '&hl=en&oi=ao')
     page <- get_scholar_resp(url)
     if (is.null(page)) next
-    aa <- httr::content(page, as='text')
+    ct <- httr::headers(page)[["content-type"]]
+    encoding <- if (!is.null(ct) && grepl("charset=", ct, ignore.case = TRUE)) {
+      sub(".*charset=([^;]+).*", "\\1", ct, ignore.case = TRUE)
+    } else {
+      "UTF-8"
+    }
+    aa <- iconv(rawToChar(httr::content(page, as = "raw")), from = encoding, to = "UTF-8", sub = "byte")
     doc <- xml2::read_html(aa)
     hrefs <- rvest::html_nodes(doc, css = ".gs_ai_name a") |> rvest::html_attr("href")
     if (length(hrefs) == 0) {
