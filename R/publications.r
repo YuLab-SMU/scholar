@@ -83,7 +83,7 @@ get_publications <- function(id, cstart = 0, cstop = Inf, pagesize=100, flush=FA
         page <- get_scholar_resp(url)
         if (is.null(page)) return(NA)
 
-        page <- page %>% read_html()
+        page <- page %>% read_scholar_html()
         cites <- page %>% html_nodes(xpath="//tr[@class='gsc_a_tr']")
 
         title <- cites %>% html_nodes(".gsc_a_at") %>% html_text()
@@ -171,7 +171,7 @@ get_article_cite_history <- function (id, article) {
     if (is.null(res)) return(dummy_output)
 
     httr::stop_for_status(res, "get user id / article information")
-    doc <- read_html(res)
+    doc <- read_scholar_html(res)
 
     ## Inspect the bar chart to retrieve the citation values and years
     years <- doc %>%
@@ -385,7 +385,7 @@ get_publication_abstract <- function(id, pub_id, flush = FALSE) {
     page <- get_scholar_resp(url)
     if (is.null(page)) return(NA)
 
-    page <- page %>% rvest::read_html()
+    page <- page %>% read_scholar_html()
 
     data <- page %>% rvest::html_nodes(xpath="//div[@class='gsh_csp']") %>% rvest::html_text()
     #url <- page %>% rvest::html_nodes(xpath="//a[@class='gsc_oci_title_link']") %>% rvest::html_attr("href")
@@ -437,7 +437,7 @@ get_publication_url <- function(id, pub_id, flush = FALSE) {
     page <- get_scholar_resp(url)
     if (is.null(page)) return(NA)
 
-    page <- page %>% rvest::read_html()
+    page <- page %>% read_scholar_html()
 
     data <- page %>% rvest::html_nodes(xpath="//a[@class='gsc_oci_title_link']") %>% rvest::html_attr("href")
 
@@ -516,7 +516,7 @@ get_publication_date <- function(id, pub_id, flush = FALSE) {
     page <- get_scholar_resp(url)
     if (is.null(page)) return(NA)
 
-    page <- page %>% rvest::read_html()
+    page <- page %>% read_scholar_html()
 
     fields <- page %>% rvest::html_nodes(xpath="//div[@class='gsc_oci_field']") %>% rvest::html_text()
     field_num <- stringr::str_which(fields, "Publication date")
@@ -574,7 +574,7 @@ get_publication_data_extended <- function(id, pub_id, flush = FALSE) {
     page <- get_scholar_resp(url)
     if (is.null(page)) return(NA)
 
-    page <- page %>% rvest::read_html()
+    page <- page %>% read_scholar_html()
 
     fields <- page %>% rvest::html_nodes(xpath="//div[@class='gsc_oci_field']") %>% rvest::html_text()
     field_num <- stringr::str_which(fields, "Publication date")

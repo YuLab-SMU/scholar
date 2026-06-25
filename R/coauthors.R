@@ -119,8 +119,8 @@ list_coauthors <- function(id, n_coauthors) {
     url <- compose_url(id, url_template)
 
     resp <- get_scholar_resp(url, 5)
-    
-    google_scholar <- httr::content(resp)
+
+    google_scholar <- read_scholar_html(resp)
     
     author_name <-
         xml2::xml_text(
