@@ -1,0 +1,363 @@
+---
+title: "scholar: Analyse Citation Data from Google Scholar"
+author: "Guangchuang Yu, James Keirstead and Gregory Jefferis"
+date: "`r Sys.Date()`"
+format:
+  html:
+    toc: true
+    theme: cosmo
+    code-fold: false
+execute:
+  message: false
+  warning: false
+  freeze: auto
+vignette: >
+  %\VignetteIndexEntry{scholar introduction}
+  %\VignetteEngine{quarto::html}
+  %\usepackage[utf8]{inputenc}
+---
+
+```{r}
+#| label: setup
+#| echo: false
+#| results: hide
+knitr::opts_chunk$set(
+  tidy = FALSE,
+  message = FALSE,
+  warning = FALSE,
+  fig.width = 7,
+  fig.height = 4
+)
+
+has_scholar <- yulab.utils::has_internet("https://scholar.google.com")
+run_examples <- has_scholar &&
+  identical(tolower(Sys.getenv("SCHOLAR_RUN_VIGNETTE_EXAMPLES")), "true")
+```
+
+```{r}
+#| label: libraries
+#| echo: false
+#| results: hide
+library("scholar")
+library("ggplot2")
+theme_set(theme_minimal())
+```
+
+# Overview
+
+The **scholar** package extracts citation and publication data from Google
+Scholar profiles. It can be used to:
+
+* find Google Scholar profile IDs;
+* retrieve profile metadata, publication records, and citation histories;
+* calculate citation metrics such as h-index, g-index, i10-index, i50-index,
+  and i100-index;
+* inspect article-level metadata and article citation histories;
+* complete truncated author lists;
+* compare multiple scholars;
+* explore coauthor networks;
+* format publication lists for CVs;
+* match publication venues against SCImago journal rankings; and
+* predict future h-index values.
+
+Google Scholar does not provide an official public API. Results can change when
+Google changes page markup, and repeated requests may be rate limited. The
+examples below use small requests and are skipped automatically when Google
+Scholar is not reachable.
+
+# Scholar IDs
+
+Most functions need a Google Scholar profile ID. In a profile URL such as
+`https://scholar.google.com/citations?user=B7vSqZsAAAAJ`, the ID is
+`B7vSqZsAAAAJ`.
+
+```{r ids-basic}
+id <- "B7vSqZsAAAAJ"
+```
+
+If you have a URL or an ID with trailing query parameters, `tidy_id()` keeps only
+the Scholar ID.
+
+```{r tidy-id}
+tidy_id("https://scholar.google.com/citations?user=B7vSqZsAAAAJ&hl=en")
+tidy_id("B7vSqZsAAAAJ&hl=en")
+```
+
+You can search for one matching ID with `get_scholar_id()`.
+
+```{r get-scholar-id, eval=run_examples}
+get_scholar_id(first_name = "Richard", last_name = "Feynman")
+```
+
+For ambiguous names, `search_scholar_ids()` returns all author-search matches it
+can find, including IDs, affiliations, verified email text, research interests,
+and profile URLs. `max_pages` limits pagination so that examples and scripts do
+not make excessive requests.
+
+```{r search-scholar-ids, eval=run_examples}
+search_scholar_ids("hao xu", max_pages = 1)
+```
+
+# Profile Data
+
+`get_profile()` returns a list with name, affiliation, citation metrics, fields,
+homepage, coauthors, and availability counts.
+
+```{r profile, eval=run_examples}
+profile <- get_profile(id)
+profile$name
+profile[c("total_cites", "h_index", "i10_index")]
+profile$fields
+```
+
+# Publications
+
+`get_publications()` returns a data frame of publications from a Scholar
+profile. It includes the publication title, displayed author list, venue text,
+volume/page details, citation count, year, the Google Scholar citation ID
+(`cid`), and the publication ID (`pubid`).
+
+```{r publications, eval=run_examples}
+pubs <- get_publications(id, pagesize = 20)
+head(pubs, 3)
+```
+
+You can sort the profile page by citation count or by publication year.
+
+```{r publications-sort, eval=run_examples}
+head(get_publications(id, pagesize = 10, sortby = "year"), 3)
+```
+
+Google Scholar sometimes truncates long author lists with `...`. Use
+`get_publications_all_authors()` when you need the complete author list for
+those rows. It only calls `get_complete_authors()` for rows that appear to be
+truncated.
+
+```{r all-authors, eval=FALSE}
+pubs_full <- get_publications_all_authors(id, pagesize = 20, delay = 1)
+head(pubs_full, 3)
+```
+
+For a single publication ID, call `get_complete_authors()` directly.
+
+```{r complete-authors, eval=run_examples}
+get_complete_authors(id, pubs$pubid[1], delay = 0)
+```
+
+`author_position()` helps analyse where a named author appears in publication
+author lists. `Position_Normalized` is 0 for first author, 1 for last author,
+and values between 0 and 1 for middle positions.
+
+```{r author-position, eval=run_examples}
+author_position(pubs$author[1:5], profile$name)
+```
+
+# Citation Histories
+
+`get_citation_history()` retrieves the yearly citation bar chart for a scholar.
+
+```{r citation-history, eval=run_examples}
+ct <- get_citation_history(id)
+ct
+```
+
+```{r citation-history-plot, eval=run_examples}
+ggplot(ct, aes(year, cites)) +
+  geom_line() +
+  geom_point() +
+  labs(x = "Year", y = "Citations")
+```
+
+`get_article_cite_history()` retrieves the yearly citation history for one
+publication. Missing years are filled with zero citations.
+
+```{r article-citation-history, eval=run_examples}
+article_history <- get_article_cite_history(id, pubs$pubid[1])
+article_history
+```
+
+```{r article-citation-history-plot, eval=run_examples}
+ggplot(article_history, aes(year, cites)) +
+  geom_segment(aes(xend = year, yend = 0), linewidth = 1, colour = "grey70") +
+  geom_point(size = 3, colour = "firebrick") +
+  labs(x = "Year", y = "Citations")
+```
+
+# Citation Metrics
+
+`get_publication_metrics()` calculates metrics from a publication data frame.
+`get_scholar_metrics()` fetches publications and calculates the same summary in
+one call.
+
+```{r publication-metrics, eval=run_examples}
+get_publication_metrics(pubs)
+get_scholar_metrics(id, pagesize = 20)
+```
+
+The package also includes focused helpers used by the h-index prediction model.
+
+```{r publication-helpers, eval=run_examples}
+get_num_articles(id)
+get_oldest_article(id)
+get_num_distinct_journals(id)
+get_num_top_journals(id)
+```
+
+# Publication Details
+
+Google Scholar publication detail pages can expose additional fields. These
+helpers accept a Scholar ID and a publication ID.
+
+```{r publication-detail, eval=run_examples}
+pubid <- pubs$pubid[1]
+
+get_article_scholar_url(id, pubid)
+get_publication_url(id, pubid)
+get_publication_date(id, pubid)
+get_publication_abstract(id, pubid)
+get_publication_data_extended(id, pubid)
+```
+
+Some publications have no linked PDF, abstract, or publication date on Google
+Scholar. In those cases the corresponding helper may return an empty value or
+`NA`.
+
+# Comparing Scholars
+
+`compare_scholars()` compares citation totals from publication records by
+publication year.
+
+```{r compare-scholars, eval=run_examples}
+ids <- c("B7vSqZsAAAAJ", "DO5oG40AAAAJ")
+cs <- compare_scholars(ids)
+head(cs, 3)
+```
+
+```{r compare-scholars-plot, eval=run_examples}
+cs <- dplyr::filter(cs, !is.na(year) & year > 1900)
+
+ggplot(cs, aes(year, cites, colour = name, group = name)) +
+  geom_line() +
+  labs(x = "Publication year", y = "Citations", colour = NULL) +
+  theme(legend.position = "bottom")
+```
+
+`compare_scholar_careers()` compares citation histories after aligning each
+scholar by career year.
+
+```{r compare-careers, eval=run_examples}
+csc <- compare_scholar_careers(ids)
+head(csc, 3)
+```
+
+```{r compare-careers-plot, eval=run_examples}
+ggplot(csc, aes(career_year, cites, colour = name, group = name)) +
+  geom_line() +
+  geom_point() +
+  labs(x = "Career year", y = "Citations", colour = NULL) +
+  theme(legend.position = "bottom")
+```
+
+# Coauthor Networks
+
+`get_coauthors()` retrieves the coauthors listed by Google Scholar for a profile
+and can optionally expand the network by following coauthors' profiles. Keep
+`n_coauthors` and `n_deep` small for exploratory work; network plots get messy
+quickly and repeated requests can be rate limited.
+
+```{r coauthors, eval=run_examples}
+coauthor_network <- get_coauthors("DO5oG40AAAAJ", n_coauthors = 4, n_deep = 0)
+coauthor_network
+```
+
+```{r coauthors-plot, eval=run_examples}
+if (nrow(coauthor_network) > 1) {
+  plot_coauthors(coauthor_network)
+}
+```
+
+# Journal Rankings
+
+`get_journalrank()` downloads SCImago journal ranking data. With no `journals`
+argument it returns the full table. With a character vector it matches journal
+names to SCImago rows using approximate matching.
+
+```{r journalrank, eval=run_examples}
+jr <- get_journalrank()
+head(jr, 3)
+
+get_journalrank(c("Nature", "Science"))
+```
+
+# Predicting Future h-index
+
+`predict_h_index()` implements the model from Acuna et al. for predicting future
+h-index values. The original model was calibrated on neuroscientists, so results
+for other fields should be treated as illustrative rather than authoritative.
+
+```{r predict-h-index, eval=run_examples}
+predict_h_index("GAi23ssAAAAJ")
+```
+
+You can provide a custom list of top journals for the model's top-journal
+predictor.
+
+```{r predict-h-index-custom, eval=FALSE}
+predict_h_index(
+  id,
+  journals = c("Nature", "Science", "Proceedings of the National Academy of Sciences")
+)
+```
+
+# Formatting Publications for CVs
+
+`format_publications()` returns publication strings that can be printed in
+R Markdown, Quarto, or a CV workflow. The `author.name` argument highlights a
+chosen author in bold after converting the supplied name to the abbreviated
+format used by the output.
+
+```{r format-publications-asis, results="asis", eval=run_examples}
+format_publications("DO5oG40AAAAJ", "Guangchuang Yu") |>
+  head() |>
+  cat(sep = "\n\n")
+```
+
+For numbered output, print the returned vector directly.
+
+```{r format-publications-print, eval=run_examples}
+format_publications("DO5oG40AAAAJ", "Guangchuang Yu") |>
+  head() |>
+  print(quote = FALSE)
+```
+
+# Mirrors, Retries, and Caching
+
+Use `set_scholar_mirror()` if you need to point the package at a compatible
+Scholar mirror.
+
+```{r mirror, eval=FALSE}
+set_scholar_mirror("https://scholar.google.com")
+```
+
+All network requests go through `get_scholar_resp()`, which stores Google
+Scholar session cookies and retries transient failures. `get_publications()`
+also caches profile publication data with `R.cache` in a temporary cache
+directory. Use `flush = TRUE` in `get_publications()` or functions that forward
+to it when you need fresh data.
+
+```{r flush-cache, eval=FALSE}
+get_publications(id, flush = TRUE)
+get_scholar_metrics(id, flush = TRUE)
+```
+
+For large workflows, prefer fetching each scholar's publications once and then
+reusing the returned data frame for multiple summaries.
+
+```{r reusable-publications, eval=FALSE}
+pubs <- get_publications(id)
+
+recent <- subset(pubs, !is.na(year) & year >= 2020)
+nrow(recent)
+sum(recent$cites, na.rm = TRUE)
+get_publication_metrics(recent)
+```

@@ -1,7 +1,7 @@
 Package: scholar
 Type: Package
 Title: Analyse Citation Data from Google Scholar
-Version: 0.2.7
+Version: 1.0.0
 Authors@R: c(
     person("Guangchuang", "Yu",   email = "guangchuangyu@gmail.com",   role = c("aut", "cre"), comment = c(ORCID = "0000-0002-6485-8781")),
     person("James", "Keirstead",  email = "james.keirstead@gmail.com", role = "aut"),
@@ -12,9 +12,11 @@ Authors@R: c(
     person("Dominique", "Makowski", email = "dom.makowski@gmail.com",        role = "ctb")
     )
 Maintainer: Guangchuang Yu <guangchuangyu@gmail.com>
-Description: Provides functions to extract citation data from Google
-    Scholar.  Convenience functions are also provided for comparing
-    multiple scholars and predicting future h-index values.
+Description: Provides tools to retrieve, analyse, and format publication and
+    citation data from Google Scholar profiles. It supports profile lookup,
+    publication records, citation histories, scholar comparison, coauthor
+    networks, journal ranking queries, CV-ready publication lists, and citation
+    metric summaries.
 Depends:
     R (>= 4.1.0)
 Imports:
@@ -30,13 +32,13 @@ Imports:
     ggplot2
 Suggests:
     knitr,
+    quarto,
     rmarkdown,
-    prettydoc,
     roxygen2,
     spelling,
     testthat (>= 2.1.0),
     yulab.utils
-VignetteBuilder: knitr
+VignetteBuilder: quarto
 License: MIT + file LICENSE
 URL: https://github.com/YuLab-SMU/scholar
 BugReports: https://github.com/YuLab-SMU/scholar/issues

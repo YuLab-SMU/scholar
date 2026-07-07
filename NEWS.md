@@ -1,5 +1,6 @@
-# scholar 0.2.7
+# scholar 1.0.0
 
++ convert the package vignette from R Markdown to Quarto and expand the feature overview (2026-07-07, Tue)
 + fix `author_position()` normalized-position typo for missing author positions (2026-07-07, Tue, #105)
 + retry transient Google Scholar 404 responses before returning unavailable data (2026-07-07, Tue, #108)
 + fix `get_complete_authors()` URL construction and tolerate Scholar IDs with trailing query parameters (2026-07-07, Tue, #117)
