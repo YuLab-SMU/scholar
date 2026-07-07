@@ -52,6 +52,9 @@ predict_h_index <- function(id, journals) {
     q <- get_num_top_journals(id, journals)
   }
 
+  vals <- c(n, h, y, j, q)
+  if (any(is.na(vals)) || any(!is.finite(vals))) return(NA)
+
   ## Regression coefficients, courtesy of Daniel Acuna
   coefs <- c(
              1,0.760,0.373,0.967,-0.069,0.018,0.033,
@@ -75,10 +78,10 @@ predict_h_index <- function(id, journals) {
   ## Check for sensible values
   standard.warning <- "You're probably not a neuroscientist.  Please read the documentation for information on the limitations of this function."
   
-  if (any(diff(h.vals)<0))
+  if (any(diff(h.vals)<0, na.rm=TRUE))
       warning(paste0("Decreasing h-values predicted. ", standard.warning))
 
-  if (any(h.vals<0))
+  if (any(h.vals<0, na.rm=TRUE))
       warning("Negative h-values predicted. ", standard.warning)
   
   return(data.frame(years_ahead=c(0:10), h_index=h.vals))

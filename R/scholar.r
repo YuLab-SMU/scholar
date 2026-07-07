@@ -172,6 +172,7 @@ get_citation_history <- function(id) {
 ##' @export
 get_num_distinct_journals <- function(id) {
   papers <- get_publications(id)
+  if (!has_publication_data(papers)) return(NA_integer_)
   return(length(unique(papers$journal)))
 }
 
@@ -194,6 +195,7 @@ get_num_distinct_journals <- function(id) {
 ##' @export
 get_num_top_journals <- function(id, journals) {
   papers <- get_publications(id)
+  if (!has_publication_data(papers)) return(NA_integer_)
 
   if (missing(journals)) {
     journals <-c("Nature", "Science", "Nature Neuroscience",

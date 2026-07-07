@@ -207,6 +207,7 @@ get_article_cite_history <- function (id, article) {
 ##' @export
 get_num_articles <- function(id) {
     papers <- get_publications(id)
+    if (!has_publication_data(papers)) return(NA_integer_)
     return(nrow(papers))
 }
 
@@ -219,7 +220,12 @@ get_num_articles <- function(id) {
 ##' @export
 get_oldest_article <- function(id) {
     papers <- get_publications(id)
+    if (!has_publication_data(papers) || all(is.na(papers$year))) return(NA_real_)
     return(min(papers$year, na.rm=TRUE))
+}
+
+has_publication_data <- function(papers) {
+    is.data.frame(papers) && nrow(papers) > 0
 }
 
 
