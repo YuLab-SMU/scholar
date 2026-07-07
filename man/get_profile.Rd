@@ -35,7 +35,7 @@ ID can be found by searching Google Scholar at
 \url{http://scholar.google.com}.
 }
 \examples{
-{
+\donttest{
    ## Gets profiles of some famous physicists
    ids <- c("xJaxiEEAAAAJ", "DO5oG40AAAAJ")
    profiles <- lapply(ids, get_profile)

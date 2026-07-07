@@ -30,7 +30,7 @@ utils::globalVariables(c("name"))
 ##'  \item {not_available} the number of publications only available behind a paywall
 ##' }
 ##'
-##' @examples {
+##' @examples \donttest{
 ##'    ## Gets profiles of some famous physicists
 ##'    ids <- c("xJaxiEEAAAAJ", "DO5oG40AAAAJ")
 ##'    profiles <- lapply(ids, get_profile)
