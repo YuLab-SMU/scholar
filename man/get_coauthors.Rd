@@ -26,8 +26,9 @@ Gets the network of coauthors of a scholar
 }
 \details{
 Considering that scraping each publication for all coauthors is error prone, \code{get_coauthors}
-grabs only the coauthors listed on the google scholar profile (on the bottom right of the profile),
-not from all publications.
+grabs the coauthors listed by Google Scholar for the profile, not from all
+publications. It first tries Google Scholar's full colleagues list and falls
+back to the profile sidebar if that list is unavailable.
 }
 \examples{
 
