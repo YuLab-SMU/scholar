@@ -147,5 +147,5 @@ compose_url <- function(id, url_template) {
 
 # Extract the google scholar id of a url
 grab_id <- function(url) {
-    stringr::str_extract(url, "(?<=user=)[^=]*")
+    stringr::str_extract(url, "(?<=user=)[^&#]*")
 }
