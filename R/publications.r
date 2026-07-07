@@ -91,9 +91,8 @@ get_publications <- function(id, cstart = 0, cstop = Inf, pagesize=100, flush=FA
             html_attr("href") %>% str_extract(":.*$") %>% str_sub(start=2)
         doc_id <- cites %>% html_nodes(".gsc_a_ac") %>% html_attr("href") %>%
             str_extract("cites=.*$") %>% str_sub(start=7)
-        cited_by <- suppressWarnings(cites %>% html_nodes(".gsc_a_ac") %>%
-                                     html_text() %>%
-                                     as.numeric(.) %>% replace(is.na(.), 0))
+        cited_by <- cites %>% html_nodes(".gsc_a_ac") %>%
+            parse_citation_counts()
         year <- cites %>% html_nodes(".gsc_a_y") %>% html_text() %>%
             as.numeric()
         authors <- cites %>% html_nodes("td .gs_gray") %>% html_text() %>%
@@ -365,6 +364,23 @@ download_scimagojr_rankings <- function(url = "https://www.scimagojr.com/journal
     con <- textConnection(txt)
     on.exit(close(con), add = TRUE)
     utils::read.csv2(con, stringsAsFactors = FALSE, check.names = FALSE)
+}
+
+
+parse_citation_counts <- function(nodes) {
+    text <- nodes %>% rvest::html_text2()
+    text <- gsub("\u00a0", " ", text)
+    text <- gsub("[\u0335\u0336\u0338]", "", text)
+    hits <- gregexpr("[0-9][0-9,]*", text)
+    cites <- vapply(seq_along(text), function(i) {
+        match <- regmatches(text[i], hits[i])[[1]]
+        if (identical(match, character(0))) {
+            return(0)
+        }
+        as.numeric(gsub(",", "", match[length(match)]))
+    }, numeric(1))
+    cites[is.na(cites)] <- 0
+    cites
 }
 
 

@@ -1,5 +1,6 @@
 # scholar 0.2.7
 
++ improve publication citation count parsing for formatted or struck-through Google Scholar values (2026-07-07, Tue)
 + restore `get_journalrank()` with browser-like SCImago CSV download to avoid HTTP 403 errors (2026-07-07, Tue)
 + fix Google Scholar HTML encoding conversion to avoid example failures when pages contain Latin-1 characters (2026-07-07, Tue)
 
