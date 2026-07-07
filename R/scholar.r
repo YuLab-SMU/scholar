@@ -329,14 +329,8 @@ get_scholar_id <- function(last_name="", first_name="", affiliation = NA) {
     url <- paste0(site, '/citations?view_op=search_authors&mauthors=', mval, '&hl=en&oi=ao')
     page <- get_scholar_resp(url)
     if (is.null(page)) next
-    ct <- httr::headers(page)[["content-type"]]
-    encoding <- if (!is.null(ct) && grepl("charset=", ct, ignore.case = TRUE)) {
-      sub(".*charset=([^;]+).*", "\\1", ct, ignore.case = TRUE)
-    } else {
-      "UTF-8"
-    }
-    aa <- iconv(rawToChar(httr::content(page, as = "raw")), from = encoding, to = "UTF-8", sub = "byte")
-    doc <- xml2::read_html(aa)
+    aa <- scholar_response_text(page)
+    doc <- read_scholar_html(page)
     hrefs <- rvest::html_nodes(doc, css = ".gs_ai_name a") |> rvest::html_attr("href")
     if (length(hrefs) == 0) {
       hrefs <- rvest::html_nodes(doc, xpath = "//a[contains(@href,'citations')][contains(@href,'user=')]") |> rvest::html_attr("href")

@@ -87,18 +87,40 @@ get_scholar_resp <- function(url, attempts_left = 5) {
 #' @noRd
 read_scholar_html <- function(resp) {
   if (is.null(resp)) return(NULL)
-  
+
+  txt <- scholar_response_text(resp)
+
+  xml2::read_html(txt)
+}
+
+#' Convert an httr response body from Google Scholar to UTF-8 text
+#'
+#' @param resp an httr response object, as returned by get_scholar_resp()
+#' @return a UTF-8 character scalar
+#' @noRd
+scholar_response_text <- function(resp) {
   ct <- httr::headers(resp)[["content-type"]]
-  encoding <- if (!is.null(ct) && grepl("charset=", ct, ignore.case = TRUE)) {
+  declared_encoding <- if (!is.null(ct) && grepl("charset=", ct, ignore.case = TRUE)) {
     sub(".*charset=([^;]+).*", "\\1", ct, ignore.case = TRUE)
   } else {
-    "UTF-8"
+    character(0)
   }
-  
+
   raw_bytes <- httr::content(resp, as = "raw")
-  txt <- iconv(rawToChar(raw_bytes), from = encoding, to = "UTF-8", sub = "byte")
-  
-  xml2::read_html(txt)
+  raw_text <- rawToChar(raw_bytes)
+  encodings <- unique(c(declared_encoding, "UTF-8", "Windows-1252", "ISO-8859-1"))
+
+  for (encoding in encodings) {
+    txt <- iconv(raw_text, from = encoding, to = "UTF-8", sub = NA)
+    if (!is.na(txt)) {
+      Encoding(txt) <- "UTF-8"
+      return(txt)
+    }
+  }
+
+  txt <- iconv(raw_text, from = encodings[1], to = "UTF-8", sub = "byte")
+  Encoding(txt) <- "UTF-8"
+  txt
 }
 
 
