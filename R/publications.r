@@ -144,6 +144,69 @@ get_publications <- function(id, cstart = 0, cstop = Inf, pagesize=100, flush=FA
     return(data)
 }
 
+##' Calculate citation metrics from publication data
+##'
+##' Calculates common citation metrics from a publication data frame, such as
+##' the result returned by \code{\link{get_publications}}.
+##'
+##' @param publications a data frame containing a numeric \code{cites} column
+##' @return a data frame with h-index, g-index, i10-index, i50-index, i100-index,
+##' total citations, and publication count
+##' @export
+get_publication_metrics <- function(publications) {
+    if (!has_publication_data(publications) || !"cites" %in% names(publications)) {
+        return(empty_publication_metrics())
+    }
+
+    cites <- suppressWarnings(as.numeric(publications$cites))
+    cites[is.na(cites)] <- 0
+    cites <- sort(cites, decreasing = TRUE)
+
+    ranks <- seq_along(cites)
+    h_index <- sum(cites >= ranks)
+    g_hits <- which(cumsum(cites) >= ranks^2)
+    g_index <- if (length(g_hits) == 0) 0L else max(g_hits)
+
+    data.frame(
+        total_cites = sum(cites),
+        h_index = h_index,
+        g_index = g_index,
+        i10_index = sum(cites >= 10),
+        i50_index = sum(cites >= 50),
+        i100_index = sum(cites >= 100),
+        num_publications = length(cites)
+    )
+}
+
+##' Calculate citation metrics for a scholar
+##'
+##' Fetches a scholar's publications with \code{\link{get_publications}} and
+##' calculates common citation metrics.
+##'
+##' @param id a character string specifying the Google Scholar ID
+##' @param pagesize an integer specifying the number of articles to fetch in one
+##'   batch. See \code{\link{get_publications}}.
+##' @param flush should the publication cache be flushed?
+##' @return a data frame with h-index, g-index, i10-index, i50-index, i100-index,
+##' total citations, and publication count
+##' @export
+get_scholar_metrics <- function(id, pagesize = 100, flush = FALSE) {
+    pubs <- get_publications(id, pagesize = pagesize, flush = flush)
+    get_publication_metrics(pubs)
+}
+
+empty_publication_metrics <- function() {
+    data.frame(
+        total_cites = NA_real_,
+        h_index = NA_integer_,
+        g_index = NA_integer_,
+        i10_index = NA_integer_,
+        i50_index = NA_integer_,
+        i100_index = NA_integer_,
+        num_publications = NA_integer_
+    )
+}
+
 ##' Gets the citation history of a single article
 ##'
 ##' @param id a character string giving the id of the scholar

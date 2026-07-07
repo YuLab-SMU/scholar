@@ -1,5 +1,6 @@
 # scholar 0.2.7
 
++ add `get_publication_metrics()` and `get_scholar_metrics()` for h-index, g-index, i10, i50, and i100 metrics (2026-07-07, Tue)
 + make citation history parsing tolerate mismatched Google Scholar chart labels and values (2026-07-07, Tue)
 + make `predict_h_index()` return `NA` instead of erroring when publication metrics are unavailable (2026-07-07, Tue)
 + improve publication citation count parsing for formatted or struck-through Google Scholar values (2026-07-07, Tue)
