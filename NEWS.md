@@ -1,5 +1,6 @@
 # scholar 0.2.7
 
++ add `get_publications_all_authors()` to fill truncated publication author lists only when needed (2026-07-07, Tue, #122)
 + add `search_scholar_ids()` to return all author IDs from paginated Google Scholar author search results (2026-07-07, Tue, #88)
 + add `get_publication_metrics()` and `get_scholar_metrics()` for h-index, g-index, i10, i50, and i100 metrics (2026-07-07, Tue)
 + make citation history parsing tolerate mismatched Google Scholar chart labels and values (2026-07-07, Tue)

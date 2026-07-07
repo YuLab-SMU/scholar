@@ -144,6 +144,47 @@ get_publications <- function(id, cstart = 0, cstop = Inf, pagesize=100, flush=FA
     return(data)
 }
 
+##' Gets publications with complete author lists
+##'
+##' Gets a scholar's publications and fills truncated author lists by calling
+##' \code{\link{get_complete_authors}} only for publications whose author field
+##' contains \code{...}.
+##'
+##' @param id a character string specifying the Google Scholar ID.
+##' @param delay average delay between requests for complete author lists. See
+##' \code{\link{get_complete_authors}}.
+##' @param initials if TRUE, first and middle names in completed author lists
+##' will be abbreviated. See \code{\link{get_complete_authors}}.
+##' @param ... additional arguments passed to \code{\link{get_publications}}.
+##' @return a data frame listing the publications and their details, with
+##' truncated author lists replaced where possible.
+##' @export
+get_publications_all_authors <- function(id, delay = 0.8, initials = TRUE, ...) {
+    publications <- get_publications(id, ...)
+    fill_publication_authors(publications, id, delay = delay, initials = initials)
+}
+
+fill_publication_authors <- function(publications, id, delay = 0.8, initials = TRUE,
+                                     author_fetcher = get_complete_authors) {
+    if (!has_publication_data(publications) ||
+        !"author" %in% names(publications) ||
+        !"pubid" %in% names(publications)) {
+        return(publications)
+    }
+
+    truncated <- !is.na(publications$author) & grepl("\\.\\.\\.", publications$author)
+    if (!any(truncated)) return(publications)
+
+    complete <- vapply(publications$pubid[truncated], function(pubid) {
+        author_fetcher(id, pubid, delay = delay, initials = initials)
+    }, FUN.VALUE = character(1))
+    replace <- !is.na(complete) & nzchar(complete)
+    idx <- which(truncated)[replace]
+    publications$author[idx] <- complete[replace]
+
+    publications
+}
+
 ##' Calculate citation metrics from publication data
 ##'
 ##' Calculates common citation metrics from a publication data frame, such as
