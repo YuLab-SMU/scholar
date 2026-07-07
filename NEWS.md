@@ -1,3 +1,8 @@
+# scholar 0.2.7
+
++ restore `get_journalrank()` with browser-like SCImago CSV download to avoid HTTP 403 errors (2026-07-07, Tue)
++ fix Google Scholar HTML encoding conversion to avoid example failures when pages contain Latin-1 characters (2026-07-07, Tue)
+
 # scholar 0.2.6
 
 + fix `get_publications(sortby='year')` issue (2026-02-26, Thu, #5)

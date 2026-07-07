@@ -10,7 +10,7 @@ rd:
 build:
 	## cd ..;\
 	## R CMD build $(PKGSRC)
-	Rscript -e 'devtools::build()'
+	Rscript -e 'set_proxy(); devtools::build()'
 
 build2:
 	cd ..;\
@@ -23,7 +23,7 @@ install:
 check: #build
 	## cd ..;\
 	## Rscript -e 'rcmdcheck::rcmdcheck("$(PKGNAME)_$(PKGVERS).tar.gz", args="--as-cran --run-donttest")'
-	Rscript -e 'devtools::check()'
+	Rscript -e 'set_proxy(); devtools::check()'
 	
 check2: build
 	cd ..;\

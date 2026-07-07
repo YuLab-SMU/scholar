@@ -317,7 +317,7 @@ get_journal_stats <- function(journals, max.distance, source_data, col = "Journa
 
 ##' Get journal ranking.
 ##'
-##' Get journal ranking for a journal list.
+##' Get SCImago journal ranking data.
 ##'
 ##' @examples
 ##' \dontrun{
@@ -328,18 +328,43 @@ get_journal_stats <- function(journals, max.distance, source_data, col = "Journa
 ##'
 ##' id <- cbind(id, impact)
 ##' }
-##' @param journals a character list giving the journal list
+##' @param journals a character list giving the journal list. If missing, the
+##' full SCImago journal ranking table is returned.
 ##' @param max.distance maximum distance allowed for a match between journal and journal list.
 ##' Expressed either as integer, or as a fraction of the pattern length times the maximal transformation cost
 ##' (will be replaced by the smallest integer not less than the corresponding fraction), or a list with possible components
 ##'
 ##' @return Journal ranking data.
 ##'
-##' @import dplyr
 ##' @export
 ##' @author Dominique Makowski and Guangchuang Yu
 get_journalrank <- function(journals, max.distance = 0.05) {
-    get_journal_stats(journals, max.distance, journalrankings)
+    myjournalrankings <- download_scimagojr_rankings()
+    if (missing(journals)) {
+        return(myjournalrankings)
+    }
+    get_journal_stats(journals, max.distance, myjournalrankings, col = "Title")
+}
+
+download_scimagojr_rankings <- function(url = "https://www.scimagojr.com/journalrank.php?out=xls") {
+    resp <- httr::GET(
+        url,
+        httr::user_agent(paste(
+            "Mozilla/5.0 (Windows NT 10.0; Win64; x64)",
+            "AppleWebKit/537.36 (KHTML, like Gecko)",
+            "Chrome/126.0 Safari/537.36"
+        )),
+        httr::add_headers(
+            Accept = "text/csv,application/vnd.ms-excel,*/*",
+            Referer = "https://www.scimagojr.com/journalrank.php"
+        )
+    )
+    httr::stop_for_status(resp, "download SCImago journal rankings")
+
+    txt <- httr::content(resp, as = "text", encoding = "UTF-8")
+    con <- textConnection(txt)
+    on.exit(close(con), add = TRUE)
+    utils::read.csv2(con, stringsAsFactors = FALSE, check.names = FALSE)
 }
 
 
