@@ -1,5 +1,6 @@
 # scholar 0.2.7
 
++ fix `get_complete_authors()` URL construction and tolerate Scholar IDs with trailing query parameters (2026-07-07, Tue, #117)
 + use Google Scholar's full colleagues list when retrieving coauthors to avoid the profile sidebar limit (2026-07-07, Tue, #120)
 + add `get_publications_all_authors()` to fill truncated publication author lists only when needed (2026-07-07, Tue, #122)
 + add `search_scholar_ids()` to return all author IDs from paginated Google Scholar author search results (2026-07-07, Tue, #88)

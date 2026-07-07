@@ -28,6 +28,13 @@ tidy_id <- function(id) {
         warning(msg)
     }
 
+    extracted_id <- grab_id(id)
+    if (!is.na(extracted_id) && nzchar(extracted_id)) {
+        id <- extracted_id
+    } else {
+        id <- sub("[&#?].*$", "", id)
+    }
+
     return(id)
 }
 

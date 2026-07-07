@@ -16,8 +16,8 @@ get_complete_authors = function(id, pubid, delay = .4, initials = TRUE) {
   get_author = function(id, pubid) {
       auths = ""
       site <- getOption("scholar_site")
-      url_template = paste0(site, "/citations?view_op=view_citation&citation_for_view=%s:%s")
-      url = sprintf(url_template, id, pubid)
+      id <- tidy_id(id)
+      url <- complete_authors_url(id, pubid, site)
 
       page <- get_scholar_resp(url[1])
       if (is.null(page)) return(NA)
@@ -66,6 +66,12 @@ get_complete_authors = function(id, pubid, delay = .4, initials = TRUE) {
 
 }
 
+complete_authors_url <- function(id, pubid, site = getOption("scholar_site")) {
+  id <- tidy_id(id)
+  url_template <- paste0(site, "/citations?view_op=view_citation&hl=en&user=%s&citation_for_view=%s")
+  sprintf(url_template, id, paste0(id, ":", pubid))
+}
+
 ##' format_authors
 ##'
 ##' This function converts first and middle names to initials
@@ -73,6 +79,8 @@ get_complete_authors = function(id, pubid, delay = .4, initials = TRUE) {
 
 format_authors = function(string)
   {
+  if (length(string) == 0 || is.na(string)) return(NA_character_)
+
   authors = trimws(unlist(strsplit(string, ",")))
 
   format_author = function(author){
