@@ -12,7 +12,7 @@ format_publications(scholar.profile, author.name = NULL)
 \item{author.name}{name of author to be highlighted using bold font}
 }
 \value{
-a vector of formated publications
+a vector of formatted publications
 }
 \description{
 Format publication list

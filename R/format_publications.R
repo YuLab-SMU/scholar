@@ -9,7 +9,7 @@
 ##'  library(scholar)
 ##'  format_publications("DO5oG40AAAAJ")    
 ##' }
-##' @return a vector of formated publications
+##' @return a vector of formatted publications
 ##' @importFrom rlang .data
 ##' @importFrom dplyr mutate
 ##' @export
