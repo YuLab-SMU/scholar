@@ -41,6 +41,7 @@ Useful links:
 
 Authors:
 \itemize{
+  \item Guangchuang Yu \email{guangchuangyu@gmail.com} (\href{https://orcid.org/0000-0002-6485-8781}{ORCID})
   \item James Keirstead \email{james.keirstead@gmail.com}
   \item Gregory Jefferis \email{jefferis@gmail.com} (\href{https://orcid.org/0000-0002-0587-9355}{ORCID})
 }

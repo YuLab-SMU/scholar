@@ -1,7 +1,7 @@
 Package: scholar
 Type: Package
 Title: Analyse Citation Data from Google Scholar
-Version: 0.2.6
+Version: 0.2.7
 Authors@R: c(
     person("Guangchuang", "Yu",   email = "guangchuangyu@gmail.com",   role = c("aut", "cre"), comment = c(ORCID = "0000-0002-6485-8781")),
     person("James", "Keirstead",  email = "james.keirstead@gmail.com", role = "aut"),
@@ -40,6 +40,6 @@ VignetteBuilder: knitr
 License: MIT + file LICENSE
 URL: https://github.com/YuLab-SMU/scholar
 BugReports: https://github.com/YuLab-SMU/scholar/issues
-RoxygenNote: 7.3.3
 Encoding: UTF-8
 Language: en-GB
+Config/roxygen2/version: 8.0.0
