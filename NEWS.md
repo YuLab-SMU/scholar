@@ -1,5 +1,6 @@
 # scholar 0.2.7
 
++ make citation history parsing tolerate mismatched Google Scholar chart labels and values (2026-07-07, Tue)
 + make `predict_h_index()` return `NA` instead of erroring when publication metrics are unavailable (2026-07-07, Tue)
 + improve publication citation count parsing for formatted or struck-through Google Scholar values (2026-07-07, Tue)
 + restore `get_journalrank()` with browser-like SCImago CSV download to avoid HTTP 403 errors (2026-07-07, Tue)
