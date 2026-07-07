@@ -54,14 +54,18 @@ get_scholar_resp <- function(url, attempts_left = 5) {
 
     stopifnot(attempts_left > 0)
 
-    resp <- httr::GET(url, handle = scholar_handle())
+    resp <- scholar_get(url, handle = scholar_handle())
 
     # On a successful GET, return the response
     if (httr::status_code(resp) == 200) {
         resp
     } else if (httr::status_code(resp) == 404) {
-        warning("Page 404. Please check whether the provided URL is correct.")
-        return(NULL)
+        if (attempts_left == 1) {
+            warning("Page 404. Please check whether the provided URL is correct.")
+            return(NULL)
+        }
+        scholar_sleep(1)
+        get_scholar_resp(url, attempts_left - 1)
     } else if(httr::status_code(resp) == 429){
         warning("Response code 429. Google is rate limiting you for making too many requests too quickly.")
         return(NULL)
@@ -69,9 +73,17 @@ get_scholar_resp <- function(url, attempts_left = 5) {
         warning("Cannot connect to Google Scholar. Is the ID you provided correct?")
         return(NULL)
     } else { # Otherwise, sleep a second and try again
-        Sys.sleep(1)
+        scholar_sleep(1)
         get_scholar_resp(url, attempts_left - 1)
     }
+}
+
+scholar_get <- function(url, handle) {
+    httr::GET(url, handle = handle)
+}
+
+scholar_sleep <- function(time) {
+    Sys.sleep(time)
 }
 
 # GB: Add this function to R/utils.R, right after get_scholar_resp() to fix
