@@ -275,10 +275,10 @@ author_position <- function(authorlist, author){
           percentage <- (position-1)/(current_n-1)
         }
       } else{
-        pectentage <- NA
+        percentage <- NA
       }
     } else{
-      pectentage <- NA
+      percentage <- NA
     }
 
 
