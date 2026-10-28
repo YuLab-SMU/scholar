@@ -41,6 +41,12 @@ jobs:
 
       - uses: r-lib/actions/setup-pandoc@v2
 
+      # The vignette is a Quarto document (`VignetteBuilder: quarto`), so
+      # `R CMD build` needs the quarto binary; setup-pandoc alone does not
+      # provide it. Without this step the check dies while building
+      # vignettes: "Quarto binary is required to build Quarto vignettes".
+      - uses: quarto-dev/quarto-actions/setup@v2
+
       - name: Query dependencies
         run: |
           install.packages('remotes')
