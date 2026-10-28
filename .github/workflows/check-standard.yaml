@@ -76,6 +76,18 @@ jobs:
           remotes::install_cran("rcmdcheck")
         shell: Rscript {0}
 
+      # `R CMD build` installs the package into a throw-away library before
+      # rendering vignettes, and the quarto engine renders in an R process it
+      # spawns itself. On Windows that process does not see the throw-away
+      # library, so the `library("scholar")` chunk of vignettes/scholar.qmd
+      # dies with "there is no package called 'scholar'". Installing into the
+      # persistent user library, which is on every R session's default search
+      # path, makes the vignette renderable there too.
+      - name: Install package for vignette rendering
+        run: |
+          remotes::install_local(".", force = TRUE, upgrade = "never", dependencies = NA)
+        shell: Rscript {0}
+
       - name: Check
         env:
           _R_CHECK_CRAN_INCOMING_REMOTE_: false

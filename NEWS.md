@@ -1,3 +1,7 @@
+# scholar 1.0.0.001
+
++ fix `get_scholar_id()` aborting with "object 'aa' not found" when Google Scholar refuses the connection, so that it now reports that no ID was found and returns `NA` (2026-10-28, Wed)
+
 # scholar 1.0.0
 
 + convert the package vignette from R Markdown to Quarto and expand the feature overview (2026-07-07, Tue)

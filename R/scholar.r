@@ -335,6 +335,12 @@ get_scholar_id <- function(last_name="", first_name="", affiliation = NA) {
   queries <- unique(queries[nzchar(queries)])
 
   ids <- character(0)
+  ## `aa` holds the text of the last page we managed to fetch. It has to be
+  ## defined before the loop: when Google Scholar refuses the connection
+  ## every query yields a NULL page and `next` skips the assignment below,
+  ## so the sign-in check after the loop used to die with
+  ## "object 'aa' not found" instead of reporting that no ID was found.
+  aa <- ""
   for (q in queries) {
     mval <- q
     mval <- gsub('"', '%22', mval)
