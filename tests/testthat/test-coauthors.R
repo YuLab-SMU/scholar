@@ -78,3 +78,45 @@ test_that("parse_profile_coauthor_list remains available as fallback", {
 
   expect_equal(out$coauthors, c("Alice A", "Bob B"))
 })
+
+test_that("parse_profile_coauthor_list ignores menu items", {
+  html <- paste0(
+    "<html><body>",
+    "<a role='menuitem' tabindex='-1' class='gs_md_li' ",
+    "href='/citations?hl=en&amp;user=main&amp;view_op=list_works'>Sort by citations</a>",
+    "<a role='menuitem' tabindex='-1' class='gs_md_li' ",
+    "href='/citations?hl=en&amp;user=main&amp;view_op=list_works&amp;sortby=pubdate'>Sort by year</a>",
+    "<a role='menuitem' tabindex='-1' href='/intl/en/scholar/about.html'>About Scholar</a>",
+    "<a tabindex='-1' href='/citations?user=nMP0iF4AAAAJ&amp;hl=en'>Thijs Bol</a>",
+    "</body></html>"
+  )
+
+  out <- scholar:::parse_profile_coauthor_list(
+    xml2::read_html(html),
+    author_name = "Main Author",
+    author_url = "https://scholar.google.com/citations?hl=en&user=main",
+    n_coauthors = 20,
+    url_template = "https://scholar.google.com/citations?hl=en&user=%s"
+  )
+
+  expect_equal(out$coauthors, "Thijs Bol")
+})
+
+test_that("a profile without listed colleagues yields no coauthors", {
+  html <- paste0(
+    "<html><body>",
+    "<a role='menuitem' tabindex='-1' ",
+    "href='/citations?hl=en&amp;user=main&amp;view_op=list_works'>Sort by citations</a>",
+    "</body></html>"
+  )
+
+  out <- scholar:::parse_profile_coauthor_list(
+    xml2::read_html(html),
+    author_name = "Legacy Author",
+    author_url = "https://scholar.google.com/citations?hl=en&user=main",
+    n_coauthors = 20,
+    url_template = "https://scholar.google.com/citations?hl=en&user=%s"
+  )
+
+  expect_equal(nrow(out), 0)
+})

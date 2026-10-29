@@ -155,15 +155,20 @@ parse_profile_coauthor_list <- function(google_scholar, author_name, author_url,
 
     # Do not grab the text of the node yet because I need to grab the
     # href below.
+    # Real coauthor links are plain `tabindex='-1'` anchors; the ones Scholar
+    # marks as menu items are the publication sort entries and the footer
+    # links, and the sort entries carry the profile's own user id, so they
+    # pass every later check and end up reported as colleagues.
     coauthors <- xml2::xml_find_all(google_scholar,
-                                    xpath = "//a[@tabindex = '-1']")
-    
+        xpath = "//a[@tabindex = '-1'][not(@role = 'menuitem')]")
+
     subset_coauthors <- coauthor_subset(n_coauthors, length(coauthors))
     coauthor_href <- xml2::xml_attr(coauthors[subset_coauthors], "href")
     coauthors <- xml2::xml_text(coauthors)[subset_coauthors]
 
     build_coauthor_data(author_name, author_url, coauthors, coauthor_href, url_template)
 }
+
 
 parse_colleague_list <- function(google_scholar, author_name, author_url,
                                  n_coauthors, url_template) {

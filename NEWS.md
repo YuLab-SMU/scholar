@@ -1,4 +1,6 @@
-# scholar 1.0.0.002
+# scholar 1.0.0.003
+
++ stop `get_profile()` reporting the publication sort links of a profile as its coauthors, which happened on every profile that lists no colleagues (2026-10-29, Thu)
 
 + send browser-like headers to Google Scholar and recognise the sign-in, captcha and 403 pages it returns when it refuses a client, so a blocked request now names the reason instead of blaming the ID (2026-10-29, Thu, jkeirstead#123)
 + back off exponentially before retrying a rate-limited request, honour Scholar's `Retry-After` header, and give up when Google asks for longer than the budget allows (2026-10-29, Thu, jkeirstead#123)
