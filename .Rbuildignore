@@ -6,3 +6,5 @@ Makefile
 README.md
 ^\.github$
 ^CRAN-SUBMISSION$
+^AGENTS\.md$
+^TODO\.org$
