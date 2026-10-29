@@ -22,7 +22,7 @@ a data frame with one row per candidate author and the columns
 }
 \description{
 Google Scholar put author search behind a Google login, so
-[get_scholar_id()] and [search_scholar_ids()] can only reach it with a
+\\code{\\link{get_scholar_id}} and \\code{\\link{search_scholar_ids}} can only reach it with a
 session borrowed from a browser. OpenAlex is the alternative that needs no
 session and no scraping: it is an openly licensed index of scholarly
 records, maintained for programmatic use, and it publishes the h-index and
@@ -48,6 +48,6 @@ profile shows, and the two should not be mixed in one table.
 }
 }
 \seealso{
-[get_scholar_id()] for the Google Scholar route, and
-  [get_scholar_metrics()] for the same metrics as Scholar reports them.
+\\code{\\link{get_scholar_id}} for the Google Scholar route, and
+  \\code{\\link{get_scholar_metrics}} for the same metrics as Scholar reports them.
 }

@@ -107,3 +107,10 @@ test_that("get_publication_url works", {
 # Here we could add tests that use cached data
 # context("scholar tests - offline")
 
+
+test_that("get_journalrank explains its deprecation instead of downloading", {
+    expect_error(get_journalrank("Nature"), "deprecated")
+    expect_error(get_journalrank(c("Nature", "Science")), "OpenAlex")
+    ## nothing is fetched, so this must not reach the network at all
+    expect_error(get_journalrank(), "downloads nothing")
+})

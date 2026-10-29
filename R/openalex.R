@@ -1,7 +1,7 @@
 ##' Look up authors and their citation metrics in OpenAlex
 ##'
 ##' Google Scholar put author search behind a Google login, so
-##' [get_scholar_id()] and [search_scholar_ids()] can only reach it with a
+##' \\code{\\link{get_scholar_id}} and \\code{\\link{search_scholar_ids}} can only reach it with a
 ##' session borrowed from a browser. OpenAlex is the alternative that needs no
 ##' session and no scraping: it is an openly licensed index of scholarly
 ##' records, maintained for programmatic use, and it publishes the h-index and
@@ -33,8 +33,8 @@
 ##'   search_openalex_authors("Guangchuang Yu")
 ##'   search_openalex_authors("Richard Feynman", max_results = 3)
 ##' }
-##' @seealso [get_scholar_id()] for the Google Scholar route, and
-##'   [get_scholar_metrics()] for the same metrics as Scholar reports them.
+##' @seealso \\code{\\link{get_scholar_id}} for the Google Scholar route, and
+##'   \\code{\\link{get_scholar_metrics}} for the same metrics as Scholar reports them.
 ##' @importFrom stringr str_replace
 ##' @export
 search_openalex_authors <- function(name, max_results = 10) {

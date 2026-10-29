@@ -98,7 +98,7 @@ test_that("a refused author search says so once, and not at all when silenced", 
                               scholar_warned = NULL))
     withr::local_envvar(list(SCHOLAR_COOKIE = NA))
 
-    expect_warning(scholar:::scholar_refused(), "author search")
+    expect_warning(scholar:::scholar_refused(), "Author search is deprecated")
     expect_silent(scholar:::scholar_refused())
 
     options(scholar_degraded = FALSE)

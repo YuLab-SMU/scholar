@@ -299,9 +299,9 @@ author_position <- function(authorlist, author){
 #'
 #' @description Deprecated for anonymous use: Google now answers author search
 #'   with a sign-in page, so this works only where a browser session has been
-#'   supplied with [set_scholar_cookie()], or through a mirror that serves the
-#'   endpoint. [search_openalex_authors()] does the same job with no session at
-#'   all and is the route to prefer for new code.
+#'   supplied with \code{\link{set_scholar_cookie}}, or through a mirror that
+#'   serves the endpoint. \code{\link{search_openalex_authors}} does the same
+#'   job with no session at all and is the route to prefer for new code.
 #'
 #' @param last_name Researcher last name.
 #' @param first_name Researcher first name.
@@ -319,7 +319,6 @@ author_position <- function(authorlist, author){
 #' get_scholar_id(first_name = "michael", last_name = "sander", affiliation = "ETH Zurich")
 #' get_scholar_id(first_name = "michael", last_name = "sander", affiliation = "Mines")
 #' get_scholar_id(first_name = "james", last_name = "babler")
-#' }
 #' }
 get_scholar_id <- function(last_name="", first_name="", affiliation = NA) {
   if(!any(nzchar(c(first_name, last_name))))
@@ -438,8 +437,9 @@ get_scholar_id <- function(last_name="", first_name="", affiliation = NA) {
 #' Searches Google Scholar author results and returns matching author IDs.
 #' Author search is deprecated for anonymous use: Google redirects it to a
 #' sign-in page unless the request carries a browser session, see
-#' [set_scholar_cookie()]. [search_openalex_authors()] returns the same kind of
-#' candidate list without any session.
+#' \code{\link{set_scholar_cookie}}.
+#' \code{\link{search_openalex_authors}} returns the same kind of candidate
+#' list without any session.
 #'
 #' @param name author search query
 #' @param max_pages maximum number of search result pages to fetch

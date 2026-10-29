@@ -1,4 +1,6 @@
-# scholar 1.0.0.010
+# scholar 1.0.0.011
+
++ `get_journalrank()` is deprecated and fetches nothing: SCImago answers a script with a JavaScript challenge, and the table has no published licence. It now explains where journal metrics can honestly come from (OpenAlex) instead of failing after a download that cannot succeed, and the archived-copy fallback added the same week is gone (2026-10-29, Thu)
 
 + add `search_openalex_authors()`, which finds authors and their h-index and i10-index in OpenAlex — the route that needs no session, since Google now signs in every anonymous author search (2026-10-29, Thu, jkeirstead#91)
 + deprecate `get_scholar_id()` and `search_scholar_ids()` for anonymous use, in the docs and in what they report, so an empty result no longer reads as a person who does not exist (2026-10-29, Thu, jkeirstead#91)

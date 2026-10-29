@@ -21,8 +21,9 @@ a data frame with columns \code{id}, \code{name}, \code{affiliation},
 Searches Google Scholar author results and returns matching author IDs.
 Author search is deprecated for anonymous use: Google redirects it to a
 sign-in page unless the request carries a browser session, see
-[set_scholar_cookie()]. [search_openalex_authors()] returns the same kind of
-candidate list without any session.
+\code{\link{set_scholar_cookie}}.
+\code{\link{search_openalex_authors}} returns the same kind of candidate
+list without any session.
 }
 \examples{
 \donttest{

@@ -2,32 +2,39 @@
 % Please edit documentation in R/publications.r
 \name{get_journalrank}
 \alias{get_journalrank}
-\title{Get journal ranking.}
+\title{Get journal ranking (deprecated)}
 \usage{
 get_journalrank(journals, max.distance = 0.05)
 }
 \arguments{
-\item{journals}{a character list giving the journal list. If missing, the
-full SCImago journal ranking table is returned.}
+\item{journals}{a character vector of journal names. Unused; kept so that
+existing calls reach this message rather than an unrelated error.}
 
-\item{max.distance}{maximum distance allowed for a match between journal and journal list.
-Expressed either as integer, or as a fraction of the pattern length times the maximal transformation cost
-(will be replaced by the smallest integer not less than the corresponding fraction), or a list with possible components}
+\item{max.distance}{unused, kept for the same reason.}
 }
 \value{
-Journal ranking data.
+Never returns: an error is raised with the alternatives.
 }
 \description{
-Get SCImago journal ranking data.
+Deprecated: `get_journalrank()` no longer downloads anything.
+  SCImago has served its ranking page behind a JavaScript challenge since
+  late 2025, so a script is answered with HTTP 403 and cannot read the table
+  at all, and the table itself carries no published licence - it derives from
+  Elsevier's Scopus. Calling the function now says where journal metrics can
+  honestly be obtained instead of failing after a download nobody can make.
+}
+\details{
+For journal metrics, OpenAlex is openly licensed, made for
+  programmatic use and needs no scraping:
+  \url{https://api.openalex.org/sources?search=Nature} returns the h-index,
+  i10-index, work and citation counts, and the ISSNs of a journal. If you
+  need SCImago's SJR quartiles specifically, the table has to be saved by
+  hand from \url{https://www.scimagojr.com/journalrank.php} in a browser,
+  and can then be read with \code{utils::read.csv2()}.
 }
 \examples{
 \dontrun{
-library(scholar)
-
-id <- get_publications("bg0BZ-QAAAAJ&hl")
-impact <- get_journalrank(journals=id$journal)
-
-id <- cbind(id, impact)
+get_journalrank(c("Nature", "Science"))
 }
 }
 \author{

@@ -303,7 +303,7 @@ warn_scholar <- function(message, key = NULL) {
 #' Explain that Scholar refused author search rather than finding nothing
 #'
 #' Google moved `view_op=search_authors` behind a sign-in page, so the result of
-#' [get_scholar_id()] and [search_scholar_ids()] can be empty even when the
+#' \\code{\\link{get_scholar_id}} and \\code{\\link{search_scholar_ids}} can be empty even when the
 #' profile exists. Retrying cannot change that, so the user is pointed at the
 #' three things that do work; an empty result with no warning means the name
 #' really did not match anything.
@@ -349,7 +349,7 @@ scholar_sleep <- function(time) {
 #'
 #' Scholar rejects a request whose `User-Agent` announces a library rather than
 #' a browser, so the package always sends browser-like headers. Both can be
-#' overridden, see [scholar][scholar-package].
+#' overridden, see \code{\link{scholar-package}}.
 #'
 #' @return a list of httr configuration objects
 #' @noRd

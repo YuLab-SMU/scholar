@@ -295,24 +295,30 @@ if (nrow(coauthor_network) > 1) {
 
 # Journal Rankings
 
-`get_journalrank()` downloads SCImago journal ranking data. With no `journals`
-argument it returns the full table. With a character vector it matches journal
-names to SCImago rows using approximate matching.
+`get_journalrank()` is deprecated and fetches nothing. SCImago has served its
+ranking page behind a JavaScript challenge since late 2025, so a script is
+answered with HTTP 403 and cannot read the table, and the table carries no
+published licence. The function remains so that old code fails with an
+explanation rather than a stack trace:
 
-```{r journalrank, eval=FALSE}
-jr <- get_journalrank()
-head(jr, 3)
-
+```{r journalrank-deprecated, error=TRUE}
 get_journalrank(c("Nature", "Science"))
 ```
 
-SCImago serves its ranking page behind a JavaScript challenge, so a script is
-answered with HTTP 403 and cannot read the live export. The package tries the
-live URL anyway, then falls back to an archived copy of the same export and says
-so when it uses one, because an archived table is a snapshot rather than the
-current ranking. Point `options(scholar_scimago_url = ...)` at a URL or at a
-file you saved from a browser to choose the source yourself; the defaults are
-then not tried, so a local file does not quietly turn into an 11 MB download.
+For journal metrics, use OpenAlex, which is openly licensed, built for
+programmatic use, and needs no session or scraping. It publishes the h-index,
+i10-index, work and citation counts, and the ISSNs of a journal:
+
+```{r openalex-sources, eval=FALSE}
+openalex <- jsonlite::fromJSON(
+  "https://api.openalex.org/sources?search=Nature&per-page=1")
+openalex$results[, c("display_name", "works_count", "cited_by_count")]
+openalex$results$summary_stats
+```
+
+If you need SCImago's SJR quartiles specifically, save the table by hand in a
+browser from `https://www.scimagojr.com/journalrank.php` and read it with
+`utils::read.csv2()` — the separators are semicolons.
 
 # Predicting Future h-index
 
@@ -414,7 +420,7 @@ The settings the package reads, each with an environment variable of the same
 name in upper case: `scholar_site`, `scholar_user_agent`,
 `scholar_accept_language`, `scholar_request_delay`, `scholar_retry_delay`,
 `scholar_retry_max_delay`, `scholar_timeout`, `scholar_cookie`,
-`scholar_cookie_file`, `scholar_degraded`, and `scholar_scimago_url`.
+and `scholar_cookie_file`.
 
 For large workflows, prefer fetching each scholar's publications once and then
 reusing the returned data frame for multiple summaries.
