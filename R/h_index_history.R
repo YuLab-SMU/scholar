@@ -77,6 +77,12 @@ get_h_index_history <- function(id, publications = NULL, delay = 0, flush = FALS
 }
 
 ##' The cached citation history of one publication
+##'
+##' Only a history that carries years is cached. An empty one means either that
+##' Scholar has nothing for the publication or that the request was refused, and
+##' the two are indistinguishable from the result; caching the second would turn
+##' one bad moment into a paper that stays uncited for the rest of the session,
+##' quietly lowering the h-index of every year it contributes to.
 ##' @noRd
 article_history_cached <- function(id, pubid, delay = 0, flush = FALSE) {
     setCacheRootPath(file.path(tempdir(), "r-scholar"))
@@ -86,7 +92,7 @@ article_history_cached <- function(id, pubid, delay = 0, flush = FALSE) {
     if (is.null(history)) {
         if (delay > 0) Sys.sleep(delay)
         history <- get_article_cite_history(id, pubid)
-        saveCache(history, key = key)
+        if (nrow(history)) saveCache(history, key = key)
     }
     history
 }

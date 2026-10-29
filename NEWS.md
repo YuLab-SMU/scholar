@@ -1,4 +1,6 @@
-# scholar 1.0.0.016
+# scholar 1.0.0.017
+
++ cache only a citation history that carries years, so one refused request no longer freezes a publication as permanently uncited and silently lowers the h-index of every year it belongs to (2026-10-29, Thu, jkeirstead#73)
 
 + make `get_h_index_history()` work for a scholar whose cited papers all earned their citations in the same year, and for a single cited paper: accumulating a one-row or one-column table made `apply()` return a bare vector, which then failed on row indexing, so the function errored out for exactly the people it is most useful to (2026-10-29, Thu, jkeirstead#73)
 

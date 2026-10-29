@@ -107,3 +107,48 @@ test_that("a single paper in a single year works", {
         list(data.frame(year = 2026, cites = 9, pubid = "only")))
     expect_equal(out, data.frame(year = 2026L, h_index = 1L, citations = 9L))
 })
+
+test_that("a refused history is not cached as an uncited paper", {
+    calls <- 0
+    with_mocked_bindings(
+        get_article_cite_history = function(id, article) {
+            calls <<- calls + 1
+            if (calls == 1) {
+                ## what a refusal looks like: the package's own empty table
+                return(data.frame(year = numeric(0), cites = numeric(0),
+                                  pubid = character(0)))
+            }
+            data.frame(year = 2019:2021, cites = c(3, 4, 5), pubid = article)
+        },
+        code = {
+            pubs <- data.frame(pubid = "a", cites = 12, stringsAsFactors = FALSE)
+            first <- get_h_index_history("refusedprofile", publications = pubs,
+                                         flush = TRUE)
+            second <- get_h_index_history("refusedprofile", publications = pubs)
+        },
+        .package = "scholar"
+    )
+
+    expect_equal(nrow(first), 0)
+    ## the second call must ask again rather than trust the failure it saw
+    expect_equal(calls, 2)
+    expect_equal(second$year, 2019:2021)
+    expect_equal(second$h_index, c(1L, 1L, 1L))
+})
+
+test_that("a real history is still cached", {
+    calls <- 0
+    with_mocked_bindings(
+        get_article_cite_history = function(id, article) {
+            calls <<- calls + 1
+            data.frame(year = 2019:2021, cites = c(3, 4, 5), pubid = article)
+        },
+        code = {
+            pubs <- data.frame(pubid = "a", cites = 12, stringsAsFactors = FALSE)
+            get_h_index_history("cachedprofile2", publications = pubs, flush = TRUE)
+            get_h_index_history("cachedprofile2", publications = pubs)
+        },
+        .package = "scholar"
+    )
+    expect_equal(calls, 1)
+})
