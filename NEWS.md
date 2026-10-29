@@ -1,4 +1,7 @@
-# scholar 1.0.0.004
+# scholar 1.0.0.005
+
++ add `get_citing_articles()`, which lists the works Google Scholar cites a publication with — the "who cites it, and where" that jkeirstead#4 and jkeirstead#107 asked for, and what a citation count on its own cannot answer (2026-10-29, Thu, jkeirstead#4, jkeirstead#107)
++ recognise the captcha page Scholar serves from its own host with HTTP 200, so a refused request is reported as a refusal instead of looking like a publication that nothing cites (2026-10-29, Thu, jkeirstead#123)
 
 + add `set_scholar_cookie()` and the `scholar_cookie` / `scholar_cookie_file` settings, so a session exported from a browser can be presented to the endpoints Google now signs in first (2026-10-29, Thu, jkeirstead#91)
 + make the browser headers actually reach the request: `httr` silently discards a list of settings passed as a single argument, so the request went out as `libcurl` after all (2026-10-29, Thu, jkeirstead#123)

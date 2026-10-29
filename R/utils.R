@@ -101,9 +101,10 @@ get_scholar_resp <- function(url, attempts_left = 5) {
 
         resp <- scholar_get(url, handle = scholar_handle())
         status <- status_code_or_zero(resp)
+        blocked <- scholar_block_type(resp, status)
 
         # On a successful GET, return the response
-        if (status == 200 && !is_scholar_interstitial(resp)) {
+        if (status == 200 && is.null(blocked)) {
             return(resp)
         }
 
@@ -135,9 +136,9 @@ get_scholar_resp <- function(url, attempts_left = 5) {
             next
         }
 
-        if (status %in% c(401L, 403L) || is_scholar_interstitial(resp)) {
-            warn_scholar(scholar_blocked_message(resp, status),
-                         key = paste0("blocked:", scholar_block_type(resp, status, status)))
+        if (!is.null(blocked) || status %in% c(401L, 403L)) {
+            warn_scholar(scholar_blocked_message(resp, status, blocked),
+                         key = paste0("blocked:", blocked %||% paste0("http", status)))
             return(NULL)
         }
 
@@ -186,6 +187,40 @@ scholar_sign_in_url <- function(url) {
         grepl("[?&]flowEntry=ServiceLogin", url)
 }
 
+#' Does this response hold Scholar's JavaScript captcha instead of data?
+#'
+#' The cited-by pages are answered with an HTTP 200 shell whose only content is
+#' a captcha that has to be cleared by JavaScript, which no script can do. Its
+#' signature is checked first, and a page that does carry data is never called a
+#' refusal: class names alone are useless here because Scholar inlines the
+#' stylesheet that defines every one of them.
+#'
+#' @param resp an httr response
+#' @return \code{TRUE} when the body is the captcha shell
+#' @noRd
+scholar_captcha_body <- function(resp) {
+    txt <- tryCatch(scholar_response_text(resp), error = function(e) NULL)
+    if (is.null(txt)) return(FALSE)
+    scholar_captcha_markup(txt)
+}
+
+scholar_captcha_markup <- function(txt) {
+    if (!is.character(txt) || length(txt) != 1 || is.na(txt) || !nzchar(txt)) {
+        return(FALSE)
+    }
+    ## Attribute form, so that the inlined stylesheet cannot pose as content:
+    ## every Scholar page ships CSS that names all of these classes.
+    if (grepl(paste('class="gs_ri"', 'id="gs_res_ccl_mid"', 'class="gsc_a_tr"',
+                    'id="gsc_prf_in"', 'id="gsc_scb"', 'class="gsc_g_t"',
+                    'class="gs_ai_name"', 'id="gsc_codb_data"', sep = "|"), txt)) {
+        return(FALSE)
+    }
+    grepl("verify that you're not a robot", txt, fixed = TRUE) ||
+        grepl("verify that you&#39;re not a robot", txt, fixed = TRUE) ||
+        grepl("show you're not a robot", txt, fixed = TRUE) ||
+        grepl('id="gs_captcha"', txt, fixed = TRUE)
+}
+
 scholar_captcha_url <- function(url) {
     grepl("^https?://([a-z0-9-]+\\.)*google\\.[a-z.]+/(sorry|recaptcha)(/|\\?)", url, ignore.case = TRUE)
 }
@@ -214,25 +249,39 @@ scholar_retry_after <- function(resp) {
     max(as.numeric(difftime(deadline, Sys.time(), units = "secs")), 0)
 }
 
-scholar_block_type <- function(resp, url = NULL, status = NULL) {
+#' What stopped this response from being data, if anything
+#'
+#' @param resp an httr response
+#' @param status its HTTP status
+#' @return \code{"sign-in"}, \code{"captcha"}, \code{"no-data"}, or \code{NULL}
+#' @noRd
+scholar_block_type <- function(resp, status = status_code_or_zero(resp)) {
     url <- scholar_response_url(resp)
     if (scholar_sign_in_url(url)) return("sign-in")
     if (scholar_captcha_url(url)) return("captcha")
-    paste0("http", status)
+    ## Scholar also answers with a plain HTTP 200 shell whose only content is a
+    ## captcha that needs JavaScript, which is what a script cannot clear. The
+    ## markup of a page that does carry data is checked first so that this
+    ## cannot turn a real answer into a refusal.
+    if (status == 200 && scholar_captcha_body(resp)) return("captcha")
+    NULL
 }
 
-scholar_blocked_message <- function(resp, status) {
-    url <- scholar_response_url(resp)
-    sign_in <- scholar_sign_in_url(url)
-    captcha <- scholar_captcha_url(url)
+scholar_blocked_message <- function(resp, status, type = NULL) {
+    type <- type %||% scholar_block_type(resp, status)
+    sign_in <- identical(type, "sign-in")
+    captcha <- identical(type, "captcha")
     if (sign_in) {
         lead <- "Google Scholar redirected to a Google sign-in page, which means
             this endpoint now requires an authenticated session."
     } else if (captcha) {
         lead <- "Google Scholar answered with its captcha page (google.com/sorry)
             instead of data."
-    } else {
+    } else if (identical(type, "http403") || status %in% c(401L, 403L)) {
         lead <- paste0("Google Scholar refused the request (HTTP ", status, ").")
+    } else {
+        lead <- "Google Scholar returned a captcha page that needs JavaScript, "
+        lead <- paste0(lead, "so the response contains no data.")
     }
     paste0(lead, "\n",
         "  This is what happens when requests come from an IP that Google does not\n",
@@ -531,4 +580,10 @@ compose_url <- function(id, url_template) {
 # Extract the google scholar id of a url
 grab_id <- function(url) {
     stringr::str_extract(url, "(?<=user=)[^&#]*")
+}
+
+#' Fall back when a value is NULL
+#' @noRd
+`%||%` <- function(value, fallback) {
+    if (is.null(value)) fallback else value
 }
