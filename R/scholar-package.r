@@ -15,21 +15,36 @@
 #'   with Google Scholar, we recommend that you use the
 #'   \code{\link{get_scholar_resp}} function to carry out the query.
 #'
-#'   Some endpoints, author search among them, now want a session that only a
-#'   browser has. \code{\link{set_scholar_cookie}} hands that session to the
-#'   package: either paste the \code{Cookie} value from a browser that can open
-#'   the page, or point it at a file exported from one. Prefer the file: cookies
-#'   that begin with \code{#HttpOnly_} in a Netscape jar are the decisive ones,
-#'   and pasting a session into a script leaves it in your command history. The
-#'   package sends them itself as a \code{Cookie} header rather than leaving it
-#'   to \code{libcurl}, which discards exactly those \code{HttpOnly} rows.
-#'   A session expires with the browser session it came from, and Google ends it
-#'   sooner when it sees unusual use, so expect to refresh it.
+#'   Some endpoints, author search and the cited-by list among them, now want a
+#'   session that only a browser has. \code{\link{set_scholar_cookie}} hands
+#'   that session to the package: either paste the \code{Cookie} value of a
+#'   browser that can open the page, or point it at a file exported from one.
+#'   Prefer the file, and read it from an environment variable rather than
+#'   writing it into a script, because a session is a credential and an option
+#'   value ends up in the command history. The cookies that matter, \code{NID},
+#'   \code{_Secure-ENID}, \code{GSP} and \code{SOCS}, are \code{HttpOnly},
+#'   so a browser will not reveal them to a script or a copy button: take them
+#'   from the developer tools under Application, or with an extension that
+#'   exports a cookie file. Google publishes their lifetimes as six months for
+#'   \code{NID} and thirteen for \code{_Secure-ENID} and \code{SOCS}, counted
+#'   from last use, and ends a session sooner when it looks automated, so
+#'   expect to export it again.
 #'
-#'   None of this is a sanctioned API. Scholar's terms of service forbid
-#'   automated access, and using your own account's session puts that account's
-#'   Google access at risk of a challenge or suspension; a dedicated or
-#'   disposable account is the safer choice, and the risk stays with you.
+#'   The session is sent as a cookie rather than as a header of that name, so it
+#'   is merged with what Google sets on the connection and is not dropped when a
+#'   request is redirected to a sign-in host. It is sent only to a Google host:
+#'   a mirror that is not Google's is refused the session and told so, because
+#'   handing a Google credential to somebody else's server is not something a
+#'   package should do quietly.
+#'
+#'   None of this is a sanctioned API. Scholar has no API and no OAuth scope,
+#'   and Google's terms forbid automated access in ways its machine-readable
+#'   instructions disallow; reusing your own session is personal use, not a
+#'   distribution channel, and it puts that account's Google access at risk of a
+#'   challenge or suspension. Use a dedicated account if you must, keep the
+#'   session out of logs and version control, and for anything at scale use
+#'   OpenAlex (\url{https://api.openalex.org}), which is meant for this and
+#'   needs no session at all.
 #'
 #' @section Requests are refused, rate limited or redirected: Google Scholar has
 #'   no public API and guards the website against automated clients, so a

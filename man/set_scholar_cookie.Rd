@@ -26,11 +26,17 @@ browser you are already signed in with. Some endpoints, author search among
 them, answer an anonymous request with a Google sign-in page while showing
 data in a browser; the difference is the cookie.
 
-The session is good for as long as the browser session that
-  produced it, typically a few weeks, and Google ends it earlier when it
-  notices unusual use. Set it again, or set the \code{SCHOLAR_COOKIE} and
-  \code{SCHOLAR_COOKIE_FILE} environment variables instead, which is what
-  to do on a server or in CI where there is no browser to copy from.
+Google's own cookies are \code{HttpOnly}, so a browser will not
+  reveal them to a script or a copy button: take them from the developer
+  tools under Application, or with an extension that exports a cookie file.
+  Published lifetimes are six months for \code{NID} and thirteen for
+  \code{_Secure-ENID} and \code{SOCS}, counted from last use, and Google
+  ends a session sooner when it looks automated, so expect to export it
+  again. On a server or in CI, where there is no browser to copy from, set
+  the \code{SCHOLAR_COOKIE_FILE} environment variable rather than passing
+  the value here: a session is a credential, and an option or an argument
+  lands in the command history. The session is sent only to a Google host,
+  so a mirror set with \code{\link{set_scholar_mirror}} never receives it.
 }
 \examples{
 \dontrun{

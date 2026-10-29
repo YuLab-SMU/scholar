@@ -1,4 +1,7 @@
-# scholar 1.0.0.006
+# scholar 1.0.0.007
+
++ send the configured session as a cookie rather than as a `Cookie` header, so it is merged with the cookies Google sets instead of replacing them and survives the redirect to a sign-in host (2026-10-29, Thu, jkeirstead#91)
++ refuse to send a session to a mirror that is not a Google host, and say so, because a session is a credential (2026-10-29, Thu)
 
 + `get_journalrank()` falls back to an archived copy of the SCImago table and accepts a source of your own, because SCImago now answers a script with a JavaScript challenge and the live export cannot be read at all (2026-10-29, Thu)
 

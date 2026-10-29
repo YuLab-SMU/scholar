@@ -27,11 +27,17 @@ set_scholar_mirror <- function(mirror = NULL) {
 ##'   Netscape format used by \code{curl} or as plain \code{name=value} text.
 ##'   Both a cookie and a file may be set; their entries are merged.
 ##' @return \code{NULL}, invisibly; the values are stored as options
-##' @details The session is good for as long as the browser session that
-##'   produced it, typically a few weeks, and Google ends it earlier when it
-##'   notices unusual use. Set it again, or set the \code{SCHOLAR_COOKIE} and
-##'   \code{SCHOLAR_COOKIE_FILE} environment variables instead, which is what
-##'   to do on a server or in CI where there is no browser to copy from.
+##' @details Google's own cookies are \code{HttpOnly}, so a browser will not
+##'   reveal them to a script or a copy button: take them from the developer
+##'   tools under Application, or with an extension that exports a cookie file.
+##'   Published lifetimes are six months for \code{NID} and thirteen for
+##'   \code{_Secure-ENID} and \code{SOCS}, counted from last use, and Google
+##'   ends a session sooner when it looks automated, so expect to export it
+##'   again. On a server or in CI, where there is no browser to copy from, set
+##'   the \code{SCHOLAR_COOKIE_FILE} environment variable rather than passing
+##'   the value here: a session is a credential, and an option or an argument
+##'   lands in the command history. The session is sent only to a Google host,
+##'   so a mirror set with \code{\link{set_scholar_mirror}} never receives it.
 ##' @examples
 ##' \dontrun{
 ##'   set_scholar_cookie(cookie = "NID=abc123; GSP=XQwERT")
@@ -347,7 +353,7 @@ scholar_get <- function(url, handle) {
     ## that Scholar answers with HTTP 403. `config` is bound to an empty list
     ## first so that every setting lands in the dots rather than filling the
     ## `config` slot by position.
-    settings <- c(list(url = url, config = list(), handle = handle), scholar_headers())
+    settings <- c(list(url = url, config = list(), handle = handle), scholar_headers(url))
     do.call(httr::GET, settings)
 }
 
@@ -364,21 +370,51 @@ scholar_sleep <- function(time) {
 #' @return a list of httr configuration objects
 #' @noRd
 #' @importFrom httr user_agent add_headers
-scholar_headers <- function() {
-    headers <- list(
-        Accept = paste("text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8"),
-        `Accept-Encoding` = "gzip, deflate",
-        `Accept-Language` = scholar_accept_language()
-    )
-    cookie <- scholar_cookie()
-    if (nzchar(cookie)) {
-        headers <- c(headers, list(Cookie = cookie))
-    }
-    list(
+scholar_headers <- function(url = NULL) {
+    settings <- list(
         httr::user_agent(scholar_user_agent()),
-        httr::add_headers(.headers = unlist(headers)),
+        httr::add_headers(.headers = c(
+            Accept = paste("text/html,application/xhtml+xml,",
+                           "application/xml;q=0.9,*/*;q=0.8"),
+            `Accept-Encoding` = "gzip, deflate",
+            `Accept-Language` = scholar_accept_language())),
         httr::timeout(scholar_timeout())
     )
+    session <- scholar_session(url)
+    if (!is.null(session)) c(settings, list(session)) else settings
+}
+
+#' The configured Scholar session as request settings
+#'
+#' The session is sent as `CURLOPT_COOKIE`, which libcurl merges with the
+#' cookies Google itself set on the reused handle into a single `Cookie`
+#' header. A `Cookie` entry in the custom headers does the opposite: it replaces
+#' what the engine has, and on the redirect to a sign-in host libcurl strips
+#' custom headers, so the session would be dropped exactly where it is needed.
+#'
+#' A session is a credential, so it is sent only to a Google host: a mirror that
+#' is not Google's would otherwise receive it in plain sight.
+#'
+#' @param url the URL about to be requested; without one no session is attached
+#' @return an httr setting, or `NULL` when nothing is configured
+#' @noRd
+scholar_session <- function(url = NULL) {
+    pairs <- scholar_cookie_pairs()
+    if (!length(pairs)) return(NULL)
+    host <- scholar_host(url %||% getOption("scholar_site"))
+    if (!scholar_google_host(host)) {
+        warn_scholar(paste0(
+            "Not sending the configured Scholar session to ", host, ": it is not a ",
+            "Google host, and a session is a credential. Remove it with ",
+            "options(scholar_cookie = NULL, scholar_cookie_file = NULL) if this ",
+            "mirror is not meant to have it."),
+            key = paste0("cookie:offsite:", host))
+        return(NULL)
+    }
+    ## Values must arrive as named arguments: `set_cookies("NID=a; SOCS=b")`
+    ## is taken for one cookie whose name is empty and whose value is
+    ## percent-encoded, which Google does not read.
+    do.call(httr::set_cookies, as.list(pairs))
 }
 
 scholar_timeout <- function() {
@@ -392,6 +428,29 @@ scholar_user_agent <- function() {
 
 scholar_accept_language <- function() {
     scholar_option("scholar_accept_language", "SCHOLAR_ACCEPT_LANGUAGE", "en-US,en;q=0.9")
+}
+
+#' The configured session as named cookie values
+#'
+#' @return a named character vector, empty when no session is configured
+#' @noRd
+scholar_cookie_pairs <- function() {
+    header <- scholar_cookie()
+    if (!nzchar(header)) return(character(0))
+    entries <- trimws(strsplit(header, ";", fixed = TRUE)[[1]])
+    entries <- entries[nzchar(entries) & grepl("=", entries, fixed = TRUE)]
+    stats::setNames(sub("^[^=]*=", "", entries), sub("=.*$", "", entries))
+}
+
+scholar_host <- function(url) {
+    host <- sub("^[a-zA-Z]+://", "", url)
+    sub("[/?:].*$", "", host)
+}
+
+## Google's own host, and a mirror of it, but not a third-party site that merely
+## speaks the same markup.
+scholar_google_host <- function(host) {
+    grepl("(^|\\.)google\\.[a-z.]+$", host)
 }
 
 #' Session cookie sent to Google Scholar, if the user supplied one

@@ -6,10 +6,12 @@ cookie_file <- function(lines) {
     path
 }
 
-test_that("no Cookie header is sent unless a session was supplied", {
+test_that("no session is attached unless one was supplied", {
     withr::local_options(list(scholar_cookie = NULL, scholar_cookie_file = NULL))
     withr::local_envvar(list(SCHOLAR_COOKIE = NA, SCHOLAR_COOKIE_FILE = NA))
-    expect_false("Cookie" %in% names(scholar:::scholar_headers()[[2]]$headers))
+    settings <- scholar:::scholar_headers("https://scholar.google.com/citations")
+    expect_equal(length(settings), 3)
+    expect_length(scholar:::scholar_cookie_pairs(), 0)
 })
 
 test_that("a session is taken from the option and from a cookie file", {
@@ -43,12 +45,36 @@ test_that("a file session can be supplied by the environment", {
     expect_equal(scholar:::scholar_cookie(), "GOSRC=xyz; SIDCC=qqq")
 })
 
-test_that("the cookie is sent as a header", {
-    withr::local_options(list(scholar_cookie = "NID=abc", scholar_cookie_file = NULL))
+test_that("the session is sent as CURLOPT_COOKIE, not as a custom header", {
+    withr::local_options(list(scholar_cookie = "NID=abc; GSP=xyz", scholar_cookie_file = NULL))
     withr::local_envvar(list(SCHOLAR_COOKIE = NA, SCHOLAR_COOKIE_FILE = NA))
-    headers <- scholar:::scholar_headers()[[2]]$headers
-    expect_equal(unname(headers[["Cookie"]]), "NID=abc")
-    expect_equal(unname(headers[["Accept-Encoding"]]), "gzip, deflate")
+    settings <- scholar:::scholar_headers("https://scholar.google.com/citations")
+
+    ## A Cookie entry among the custom headers would replace the cookies Google
+    ## set on the reused handle, and be stripped on a redirect to a sign-in host.
+    expect_false("Cookie" %in% names(settings[[2]]$headers))
+    expect_equal(settings[[4]]$options$cookie, "NID=abc;GSP=xyz")
+    expect_equal(unname(settings[[2]]$headers[["Accept-Encoding"]]), "gzip, deflate")
+})
+
+test_that("a session is never sent to a mirror that is not Google", {
+    withr::local_options(list(scholar_cookie = "NID=secret", scholar_cookie_file = NULL,
+                              scholar_warned = NULL))
+    withr::local_envvar(list(SCHOLAR_COOKIE = NA))
+
+    expect_warning(settings <- scholar:::scholar_headers("https://scholar.lanfanshu.cn/citations"),
+                   "not a Google host")
+    expect_equal(length(settings), 3)
+    ## Google's own hosts, including country domains, do get it
+    expect_equal(length(scholar:::scholar_headers("https://scholar.google.com.hk/citations")), 4)
+})
+
+test_that("cookie values are split into named pairs", {
+    withr::local_options(list(scholar_cookie = "NID=abc; SOCS=CAISHY", scholar_cookie_file = NULL))
+    withr::local_envvar(list(SCHOLAR_COOKIE = NA))
+    pairs <- scholar:::scholar_cookie_pairs()
+    expect_equal(names(pairs), c("NID", "SOCS"))
+    expect_equal(unname(pairs), c("abc", "CAISHY"))
 })
 
 test_that("set_scholar_cookie stores what it is given and refuses nonsense", {
