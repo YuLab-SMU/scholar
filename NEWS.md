@@ -1,4 +1,6 @@
-# scholar 1.0.0.028
+# scholar 1.0.0.029
+
++ guard the one-time seeding request as well: it goes through the same transport code, so a failure there escaped every guard the retry loop gained, and the session it collects is only a convenience that the following request can do without (2026-10-29, Thu, jkeirstead#123)
 
 + stop `get_scholar_id()` trying every spelling of a name once the first query cannot be fetched at all: a refused or unreachable search answers the same way to all of them, so the remaining variants were four more requests spent learning nothing (2026-10-29, Thu, jkeirstead#91)
 

@@ -412,3 +412,32 @@ test_that("no warning text leaks source indentation", {
     expect_false(leak(transport))
     expect_false(leak(scholar:::scholar_transport_message(simpleError("reset by peer"))))
 })
+
+test_that("a seeding request that fails does not take the call down", {
+    ## scholar_handle() fetches a profile once to collect the cookies Google
+    ## hands out. That request can fail like any other, and a thrown error there
+    ## would escape the retry loop's guard entirely.
+    withr::local_options(list(scholar_call_home = TRUE, scholar_handle = NULL))
+    with_mocked_bindings(
+        scholar_get = function(url, handle) stop("Could not resolve host: scholar.google.com"),
+        {
+            expect_null(scholar_handle())
+        },
+        .package = "scholar"
+    )
+    ## and it is not retried on every later request
+    expect_false(isTRUE(getOption("scholar_call_home")))
+})
+
+test_that("a seeded session is still used when the seed succeeds", {
+    withr::local_options(list(scholar_call_home = TRUE, scholar_handle = NULL))
+    seeded <- structure(list(status_code = 200L, url = "https://scholar.google.com/citations?user=x"),
+                        class = "response")
+    with_mocked_bindings(
+        scholar_get = function(url, handle) seeded,
+        {
+            expect_identical(scholar_handle(), seeded)
+        },
+        .package = "scholar"
+    )
+})

@@ -65,7 +65,8 @@ issue 号：本仓库直接写 `#N`；上游 `jkeirstead/scholar` 必须写 `jke
    `status_code` 分支就完全兜不住，调用方脚本直接崩——实测在 `R CMD check` 的示例里炸过
    （`SSL connect error [accounts.google.com]`，即 302 跳登录页后握手失败）。
    现已在循环顶部 `tryCatch` 兜住：跳到 Google 登录主机的那类失败按"拒绝"处理（不重试），
-   其余按"连接问题"处理（重试，用尽后报出原始 curl 文本）。
+   其余按"连接问题"处理（重试，用尽后报出原始 curl 文本）。**`scholar_handle()` 的播种请求也要兜**——
+   它同样用 `scholar_get()`，抛错会绕过上面所有守卫；播种失败就当没有 session 继续。
 10. `make rd` 会把 `NAMESPACE` 重排成多行 `importFrom(...)` 并抬 `Config/roxygen2/version`——
    这是 roxygen 8.1.1 的正常噪声，别当成别人的改动。
 

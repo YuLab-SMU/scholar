@@ -719,7 +719,12 @@ scholar_handle <- function() {
         sample_url <- paste0(site, "/citations?user=B7vSqZsAAAAJ")
         ## Goes through scholar_get() so that the session is seeded with the
         ## same headers, and the same cookie, as the requests that follow it.
-        sink <- suppressWarnings(scholar_get(sample_url, handle = NULL))
+        ## Seeding is a convenience - it collects the cookies Google hands out -
+        ## so a connection that fails here must not take the whole call down:
+        ## the request that follows may well succeed on its own, and a THROWN
+        ## transport error would escape every guard the retry loop now has.
+        sink <- tryCatch(suppressWarnings(scholar_get(sample_url, handle = NULL)),
+                         error = function(e) NULL)
         options("scholar_call_home"=FALSE, "scholar_handle"=sink)
     }
     getOption("scholar_handle")
