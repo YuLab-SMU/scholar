@@ -3,3 +3,5 @@ TODO.org
 .DS_Store
 *.Rproj
 .Rhistory
+_problems
+testthat-problems.rds
