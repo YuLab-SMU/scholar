@@ -48,7 +48,19 @@ issue 号：本仓库直接写 `#N`；上游 `jkeirstead/scholar` 必须写 `jke
 5. 联网测试的跳过条件必须针对"**该网站不可用**"而不是"没有网络"：用
    `tests/testthat/test-scholar.R` 里的 `skip_if_no_scholar_data()` / `skip_if_no_publications()`；
    `skip_if_offline()` 挡不住 Scholar 单独封 IP，runner 是在线的。
-6. `make rd` 会把 `NAMESPACE` 重排成多行 `importFrom(...)` 并抬 `Config/roxygen2/version`——
+6. **守卫性断言必须先证明它会失败**（2026-10-29 评审教训）。`grepl("\n    [^ ]")` 只匹配
+   **恰好 4 个空格**，而真实泄漏是 12 个，于是"检查缩进"的测试在缺陷存在时一直通过——
+   比没有守卫更糟，因为它宣称问题已处理。写这类断言时，先用一条**已知会失败的输入**跑一次
+   （`expect_true(detector(<坏样本>))`），再断言正常输入不触发。同理：**别把生产代码永不产生的
+   中间值手工喂进测试**（如直接传 `type = "captcha-page"`），那样测的是不存在的分支。
+7. **`apply()` 会在结果只剩一行或一列时降维成向量**。`apply(m, 2, cumsum)` 拿到 1×k 或 k×1
+   就返回裸向量，`nrow()` 变 `NULL`，后续行索引直接报
+   `argument must be coercible to non-negative integer`。"N 篇文章 × M 年"的测试若只用
+   N≥2 且 M≥2，会**恰好绕开**这个分支；边界测试要专门覆盖 N=1 和 M=1。
+8. **别把"失败"缓存下来**。`saveCache()` 不区分"真的没有数据"和"这次请求被拒"（两者都是 0 行），
+   一次临时失败会被固化成永久结论（本例：某篇论文被记为从未被引，静默拉低 h-index）。
+   只缓存**有内容**的结果。
+9. `make rd` 会把 `NAMESPACE` 重排成多行 `importFrom(...)` 并抬 `Config/roxygen2/version`——
    这是 roxygen 8.1.1 的正常噪声，别当成别人的改动。
 
 ## `make check` 的实测耗时（2026-10-29，同一台机器）
