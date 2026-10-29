@@ -1,4 +1,6 @@
-# scholar 1.0.0.020
+# scholar 1.0.0.021
+
++ describe every refusal from the response it came from in the tests, instead of passing the refusal type by hand: a test that supplies a label the production code can never produce passes while the real message stays wrong, which is how the captcha wording survived the previous round (2026-10-29, Thu)
 
 + stop reporting a 404 as rate limiting: the retry path for a wrong URL consulted the rate-limit waiting budget, so with the small budget this package recommends for CI a mistyped ID was announced as 'Google Scholar is rate limiting this connection' (2026-10-29, Thu, jkeirstead#123)
 

@@ -1,5 +1,14 @@
 context("scholar response handling")
 
+scholar_captcha_response <- function(url = "https://scholar.google.com/scholar?cites=1") {
+    html <- paste0("<html><body><p>Sorry, we can&#39;t verify that you&#39;re not ",
+                   "a robot when JavaScript is turned off.</p></body></html>")
+    structure(
+        list(status_code = 200L, url = url, content = charToRaw(html),
+             headers = structure(list(), class = "insensitive")),
+        class = "response")
+}
+
 test_that("get_scholar_resp retries transient 404 responses", {
   calls <- 0
   fake_get <- function(url, handle) {
@@ -69,23 +78,6 @@ test_that("a Scholar ID option falls back to its environment variable", {
     expect_match(scholar:::scholar_user_agent(), "Mozilla")
 })
 
-test_that("a captcha served from Scholar itself is not called a redirect", {
-    ## The cited-by pages come back as HTTP 200 whose body is the challenge,
-    ## with no redirect to google.com/sorry anywhere in it.
-    html <- paste0("<html><body><p>Sorry, we can&#39;t verify that you&#39;re not ",
-                   "a robot when JavaScript is turned off.</p></body></html>")
-    resp <- structure(
-        list(status_code = 200L, url = "https://scholar.google.com/scholar?cites=1",
-             content = charToRaw(html),
-             headers = structure(list(), class = "insensitive")),
-        class = "response")
-
-    expect_equal(scholar:::scholar_block_type(resp), "captcha-page")
-    message <- scholar:::scholar_blocked_message(resp, 200L)
-    expect_false(grepl("google.com/sorry", message, fixed = TRUE))
-    expect_match(message, "not a robot")
-})
-
 test_that("the reason for a refusal is named correctly", {
     expect_equal(scholar:::scholar_block_type(
         scholar_response(200, "https://accounts.google.com/v3/signin/identifier?continue=x")),
@@ -100,34 +92,39 @@ test_that("the reason for a refusal is named correctly", {
         scholar_response(403, "https://scholar.google.com/scholar")))
 })
 
-test_that("no message leaks the indentation of its source line", {
+test_that("every refusal is described from the response, not from a passed type", {
+    ## The type argument is left out on purpose: this is the path a caller takes,
+    ## and a test that hands in a label the production code never produces would
+    ## pass while the real message stayed wrong.
     ## A string written across source lines keeps the newline and the spaces
-    ## that follow it, so the warning arrives with a ragged gap in the middle of
-    ## a sentence. Four or more spaces after a newline is a leak; the two-space
-    ## continuation this package uses on purpose is not.
+    ## that follow it, so the warning arrives with a ragged gap mid-sentence.
+    ## Four or more spaces after a newline is a leak; the deliberate two-space
+    ## continuation is not.
     leaks_indentation <- function(txt) grepl("\n {4,}[^ ]", txt)
+    expect_true(leaks_indentation(paste0("first line\n", strrep(" ", 12), "second")))
+    expect_false(leaks_indentation("first line\n  second"))
 
-    ## the detector has to detect, or it guards nothing: this is the exact shape
-    ## that shipped once and that the previous, weaker check let through
-    expect_true(leaks_indentation(paste0("first line\n", strrep(" ", 12), "second line")))
-    expect_false(leaks_indentation("first line\n  second line"))
+    describe <- function(resp, status = 200L) scholar:::scholar_blocked_message(resp, status)
 
-    sign_in <- scholar:::scholar_blocked_message(
-        scholar_response(200, "https://accounts.google.com/Login"), 200, "sign-in")
+    sign_in <- describe(scholar_response(
+        200, "https://accounts.google.com/v3/signin/identifier?continue=x"))
     expect_match(sign_in, "sign-in page")
     expect_false(leaks_indentation(sign_in))
 
-    js_captcha <- scholar:::scholar_blocked_message(
-        scholar_response(200, "https://scholar.google.com/scholar?cites=1"),
-        200, "captcha-page")
-    expect_match(js_captcha, "not a robot")
-    ## a page served from Scholar's own host must not be blamed on google.com/sorry
-    expect_false(grepl("google.com/sorry", js_captcha, fixed = TRUE))
-    expect_match(js_captcha, "set_scholar_cookie")
-    expect_false(leaks_indentation(js_captcha))
+    redirect_captcha <- describe(scholar_response(
+        200, "https://www.google.com/sorry/index?continue=x"))
+    expect_match(redirect_captcha, "google.com/sorry", fixed = TRUE)
+    expect_false(leaks_indentation(redirect_captcha))
 
-    refused <- scholar:::scholar_blocked_message(
-        scholar_response(403, "https://scholar.google.com/scholar"), 403, NULL)
+    ## served from Scholar itself: no redirect happened, so the advice must not
+    ## send anyone looking for one
+    body_captcha <- describe(scholar_captcha_response())
+    expect_match(body_captcha, "not a robot")
+    expect_false(grepl("google.com/sorry", body_captcha, fixed = TRUE))
+    expect_match(body_captcha, "set_scholar_cookie")
+    expect_false(leaks_indentation(body_captcha))
+
+    refused <- describe(scholar_response(403, "https://scholar.google.com/scholar"), 403L)
     expect_match(refused, "HTTP 403")
     expect_false(leaks_indentation(refused))
 })
