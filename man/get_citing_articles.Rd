@@ -11,14 +11,14 @@ get_citing_articles(id, pubid, max_pages = 5, delay = 0, publications = NULL)
 whose publication is to be expanded.}
 
 \item{pubid}{a character vector of publication IDs, as found in the
-\code{pubid} column of \\code{\\link{get_publications}}.}
+\code{pubid} column of \code{\link{get_publications}}.}
 
 \item{max_pages}{the number of ten-entry pages to read per publication.}
 
 \item{delay}{seconds to wait between pages, for the benefit of the shared
 rate limit.}
 
-\item{publications}{a table as returned by \\code{\\link{get_publications}}, used to
+\item{publications}{a table as returned by \code{\link{get_publications}}, used to
 resolve \code{pubid} to a citation key. Supply it when expanding several
 publications, so that the list is fetched once rather than per pubid.}
 }
@@ -45,7 +45,7 @@ most the first thousand citing works in ten-entry pages, and folds the
 versions of one work into a single entry. Google guards this list more
 strictly than it guards a profile page, so a hosted or data-centre IP is
 frequently answered with a captcha instead of data; see
-\code{\link{scholar-package}} and \\code{\\link{set_scholar_cookie}}. A refusal is reported
+\code{\link{scholar-package}} and \code{\link{set_scholar_cookie}}. A refusal is reported
 as a warning and returns an empty table, never a silently short list.
 }
 \examples{
@@ -56,6 +56,6 @@ as a warning and returns an empty table, never a silently short list.
 }
 }
 \seealso{
-\\code{\\link{get_publications}} for the \code{pubid} column, and
-  \\code{\\link{get_article_cite_history}} for citations to one publication per year.
+\code{\link{get_publications}} for the \code{pubid} column, and
+  \code{\link{get_article_cite_history}} for citations to one publication per year.
 }

@@ -12,17 +12,17 @@
 ##' versions of one work into a single entry. Google guards this list more
 ##' strictly than it guards a profile page, so a hosted or data-centre IP is
 ##' frequently answered with a captcha instead of data; see
-##' \code{\link{scholar-package}} and \\code{\\link{set_scholar_cookie}}. A refusal is reported
+##' \code{\link{scholar-package}} and \code{\link{set_scholar_cookie}}. A refusal is reported
 ##' as a warning and returns an empty table, never a silently short list.
 ##'
 ##' @param id a character string specifying the Google Scholar ID of the author
 ##'   whose publication is to be expanded.
 ##' @param pubid a character vector of publication IDs, as found in the
-##'   \code{pubid} column of \\code{\\link{get_publications}}.
+##'   \code{pubid} column of \code{\link{get_publications}}.
 ##' @param max_pages the number of ten-entry pages to read per publication.
 ##' @param delay seconds to wait between pages, for the benefit of the shared
 ##'   rate limit.
-##' @param publications a table as returned by \\code{\\link{get_publications}}, used to
+##' @param publications a table as returned by \code{\link{get_publications}}, used to
 ##'   resolve \code{pubid} to a citation key. Supply it when expanding several
 ##'   publications, so that the list is fetched once rather than per pubid.
 ##'
@@ -35,8 +35,8 @@
 ##'   Rows keep the order Scholar uses, which is by relevance. The table is
 ##'   empty when nothing cites the publication or when Scholar refused.
 ##'
-##' @seealso \\code{\\link{get_publications}} for the \code{pubid} column, and
-##'   \\code{\\link{get_article_cite_history}} for citations to one publication per year.
+##' @seealso \code{\link{get_publications}} for the \code{pubid} column, and
+##'   \code{\link{get_article_cite_history}} for citations to one publication per year.
 ##'
 ##' @examples
 ##' \donttest{
