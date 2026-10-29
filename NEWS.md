@@ -1,66 +1,15 @@
-# scholar 1.0.0.029
+# scholar 1.0.1
 
-+ guard the one-time seeding request as well: it goes through the same transport code, so a failure there escaped every guard the retry loop gained, and the session it collects is only a convenience that the following request can do without (2026-10-29, Thu, jkeirstead#123)
-
-+ stop `get_scholar_id()` trying every spelling of a name once the first query cannot be fetched at all: a refused or unreachable search answers the same way to all of them, so the remaining variants were four more requests spent learning nothing (2026-10-29, Thu, jkeirstead#91)
-
-+ catch a request that fails before it gets a reply — a TLS handshake that does not complete, a reset, a dead proxy — and report it, instead of letting libcurl's error escape and kill the caller: a handshake with the sign-in host is treated as the refusal it is, anything else is retried and then reported as a connection problem (2026-10-29, Thu, jkeirstead#123)
-
-+ report every colleague in `get_profile()`, not the twenty the profile sidebar happens to show: the cap was left behind when the colleagues list replaced the sidebar, so a well-collaborated profile silently lost names and `get_profile()` disagreed with `get_coauthors()` about the same person (2026-10-29, Thu)
-
-+ round `max_results` down to a whole number in `search_openalex_authors()`: a fraction was written into the request as `per-page=5.5`, which OpenAlex answers with HTTP 400, so the caller saw 'OpenAlex answered HTTP 400' instead of getting five authors (2026-10-29, Thu)
-
-+ stop asking for the next page of a citing list once a page comes back short: the answer was already known, and every needless request gives Scholar another reason to refuse the next one (2026-10-29, Thu)
-
-+ drop an unused walk over every result in `parse_citing_page()`: it read a `data-cid` attribute into a variable nothing consumed, so one extra step ran per citing work for no reason (2026-10-29, Thu)
-
-+ delete `get_journal_stats()`, left with no caller once `get_journalrank()` stopped downloading. It was unexported, so nothing outside the package could notice either way, and it was 57 lines of code that no longer ran (2026-10-29, Thu)
-
-+ describe every refusal from the response it came from in the tests, instead of passing the refusal type by hand: a test that supplies a label the production code can never produce passes while the real message stays wrong, which is how the captcha wording survived the previous round (2026-10-29, Thu)
-
-+ stop reporting a 404 as rate limiting: the retry path for a wrong URL consulted the rate-limit waiting budget, so with the small budget this package recommends for CI a mistyped ID was announced as 'Google Scholar is rate limiting this connection' (2026-10-29, Thu, jkeirstead#123)
-
-+ make the message guard actually guard: it looked for exactly four spaces after a newline, while the leak that shipped was twelve, so it passed on the very defect it was written for. It now flags four or more, allows the deliberate two-space continuation, and a self-check proves the detector detects (2026-10-29, Thu)
-
-+ report a captcha page served from Scholar's own host as that, instead of describing it as a redirect to google.com/sorry which never happened: the body-level captcha now has its own type, and a plain non-200 status no longer reaches `switch()` with a NULL selector (2026-10-29, Thu, jkeirstead#123)
-
-+ cache only a citation history that carries years, so one refused request no longer freezes a publication as permanently uncited and silently lowers the h-index of every year it belongs to (2026-10-29, Thu, jkeirstead#73)
-
-+ make `get_h_index_history()` work for a scholar whose cited papers all earned their citations in the same year, and for a single cited paper: accumulating a one-row or one-column table made `apply()` return a bare vector, which then failed on row indexing, so the function errored out for exactly the people it is most useful to (2026-10-29, Thu, jkeirstead#73)
-
-+ cap the total time one process will spend waiting for a rate-limited Scholar (`scholar_retry_budget`, 60 seconds by default): past that a refused request is abandoned at once, because a CI job that keeps waiting on a refusing IP only lengthens its own lockout — the polite backoff added this week turned a blocked check run from three minutes into eighteen (2026-10-29, Thu)
-
-+ add `get_h_index_history()`, which rebuilds the h-index year by year from each publication's citation history, so a profile reads as a trajectory instead of a single number; the histories are cached and uncited publications are skipped, since they cannot enter an h-index in any year (2026-10-29, Thu, jkeirstead#73)
-
-+ `get_journalrank()` is deprecated and fetches nothing: SCImago answers a script with a JavaScript challenge, and the table has no published licence. It now explains where journal metrics can honestly come from (OpenAlex) instead of failing after a download that cannot succeed, and the archived-copy fallback added the same week is gone (2026-10-29, Thu)
-
-+ add `search_openalex_authors()`, which finds authors and their h-index and i10-index in OpenAlex — the route that needs no session, since Google now signs in every anonymous author search (2026-10-29, Thu, jkeirstead#91)
-+ deprecate `get_scholar_id()` and `search_scholar_ids()` for anonymous use, in the docs and in what they report, so an empty result no longer reads as a person who does not exist (2026-10-29, Thu, jkeirstead#91)
-
-+ tell the two captcha pages apart: one is a redirect to Google's challenge host, the other is served from Scholar itself, and the second is no longer described as a redirect that never happened. The earlier entry claiming this was fixed was written against a patch that never landed, and is corrected here (2026-10-29, Thu)
-
-+ document what to do when Scholar refuses a request: the README and the vignette now name the four ways out, list every setting the package reads, and explain why author search and the cited-by list come back empty on a server (2026-10-29, Thu, jkeirstead#123, jkeirstead#91)
-
-+ send the configured session as a cookie rather than as a `Cookie` header, so it is merged with the cookies Google sets instead of replacing them and survives the redirect to a sign-in host (2026-10-29, Thu, jkeirstead#91)
-+ refuse to send a session to a mirror that is not a Google host, and say so, because a session is a credential (2026-10-29, Thu)
-
-+ `get_journalrank()` falls back to an archived copy of the SCImago table and accepts a source of your own, because SCImago now answers a script with a JavaScript challenge and the live export cannot be read at all (2026-10-29, Thu)
-
-+ add `get_citing_articles()`, which lists the works Google Scholar cites a publication with — the "who cites it, and where" that jkeirstead#4 and jkeirstead#107 asked for, and what a citation count on its own cannot answer (2026-10-29, Thu, jkeirstead#4, jkeirstead#107)
-+ recognise the captcha page Scholar serves from its own host with HTTP 200, so a refused request is reported as a refusal instead of looking like a publication that nothing cites (2026-10-29, Thu, jkeirstead#123)
-
-+ add `set_scholar_cookie()` and the `scholar_cookie` / `scholar_cookie_file` settings, so a session exported from a browser can be presented to the endpoints Google now signs in first (2026-10-29, Thu, jkeirstead#91)
-+ make the browser headers actually reach the request: `httr` silently discards a list of settings passed as a single argument, so the request went out as `libcurl` after all (2026-10-29, Thu, jkeirstead#123)
-+ explain a Scholar refusal when author search comes back empty, from `get_scholar_id()` and `search_scholar_ids()`, instead of reporting a bare "No Scholar ID found." (2026-10-29, Thu)
-+ state sign-in, captcha and rate-limit refusals once per session rather than on every request, and give each request a 30 second timeout (2026-10-29, Thu)
-
-+ stop `get_profile()` reporting the publication sort links of a profile as its coauthors, which happened on every profile that lists no colleagues (2026-10-29, Thu)
-
-+ send browser-like headers to Google Scholar and recognise the sign-in, captcha and 403 pages it returns when it refuses a client, so a blocked request now names the reason instead of blaming the ID (2026-10-29, Thu, jkeirstead#123)
-+ back off exponentially before retrying a rate-limited request, honour Scholar's `Retry-After` header, and give up when Google asks for longer than the budget allows (2026-10-29, Thu, jkeirstead#123)
-+ add the `scholar_user_agent`, `scholar_accept_language`, `scholar_request_delay`, `scholar_retry_delay` and `scholar_retry_max_delay` options, each falling back to an environment variable of the same name in upper case (2026-10-29, Thu)
-
-+ fix `get_scholar_id()` aborting with "object 'aa' not found" when Google Scholar refuses the connection, so that it now reports that no ID was found and returns `NA` (2026-10-28, Wed)
++ Google Scholar refuses a script in more ways than a failed request, and each one is now named: a sign-in redirect, a captcha page served with HTTP 200, a 403, a dropped connection, or a rate limit. A refusal is reported once per session with its real cause instead of "Cannot connect to Google Scholar. Is the ID you provided correct?" (2026-10-29, Thu, jkeirstead#123)
++ send browser-like headers on every request, back off exponentially with jitter when rate limited, honour `Retry-After` in both its forms, and bound the total waiting per process with `scholar_retry_budget` (60 seconds by default), so a blocked check fails fast instead of spending its time on delays (2026-10-29, Thu, jkeirstead#123)
++ author search now requires a signed-in session, so `get_scholar_id()` and `search_scholar_ids()` are deprecated for anonymous use and say when Google refused rather than finding nothing; `search_openalex_authors()` answers the same question from OpenAlex with no session, and a fractional `max_results` is rounded rather than sent as a request OpenAlex rejects (2026-10-29, Thu, jkeirstead#91)
++ `set_scholar_cookie()` and the `scholar_cookie` / `scholar_cookie_file` settings present a session exported from a browser. It is sent as a cookie, so it merges with Google's own and survives the redirect to the sign-in host, and it is never sent to a mirror that is not a Google host (2026-10-29, Thu, jkeirstead#91)
++ add `get_citing_articles()`: the works citing a publication, with venue, year and their own citation counts (2026-10-29, Thu, jkeirstead#4, jkeirstead#107)
++ add `get_h_index_history()`: the h-index year by year, rebuilt from each publication's citation history and cached so the expensive pass happens once. It works for a profile whose cited papers all fall in one year, and a refused history is no longer cached as a paper that was never cited (2026-10-29, Thu, jkeirstead#73)
++ `get_profile()` reports every colleague rather than the twenty the sidebar shows, and no longer mistakes a profile's sort-menu links for coauthors (2026-10-29, Thu)
++ `get_journalrank()` is deprecated and downloads nothing: SCImago serves a JavaScript challenge to scripts and its table carries no published licence. The help page points at OpenAlex for journal metrics (2026-10-29, Thu)
++ new settings, each falling back to an environment variable of the same name in upper case, for hosted deployments and CI: `scholar_user_agent`, `scholar_accept_language`, `scholar_request_delay`, `scholar_retry_delay`, `scholar_retry_max_delay`, `scholar_retry_budget`, `scholar_timeout`, `scholar_cookie`, `scholar_cookie_file` and `scholar_openalex_mailto` (2026-10-29, Thu)
++ the README and the vignette say what to do when Scholar refuses a request, list every setting the package reads, and warn which endpoints a server cannot reach (2026-10-29, Thu, jkeirstead#123, jkeirstead#91)
 
 # scholar 1.0.0
 
