@@ -1,4 +1,6 @@
-# scholar 1.0.0.023
+# scholar 1.0.0.024
+
++ stop asking for the next page of a citing list once a page comes back short: the answer was already known, and every needless request gives Scholar another reason to refuse the next one (2026-10-29, Thu)
 
 + drop an unused walk over every result in `parse_citing_page()`: it read a `data-cid` attribute into a variable nothing consumed, so one extra step ran per citing work for no reason (2026-10-29, Thu)
 

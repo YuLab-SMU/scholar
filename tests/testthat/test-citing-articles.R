@@ -105,3 +105,64 @@ test_that("a page with data is never called a captcha", {
     expect_false(scholar:::scholar_captcha_markup(""))
     expect_false(scholar:::scholar_captcha_markup(NA_character_))
 })
+
+test_that("a list shorter than a page is not asked for again", {
+    ## The next page would be empty by construction, and this endpoint treats
+    ## extra requests as a reason to close the door.
+    one_row <- paste0("<html><body><div id=\"gs_res_ccl_mid\">",
+        "<div class=\"gs_r gs_or gs_scl\" data-cid=\"X\"><div class=\"gs_ri\">",
+        "<h3 class=\"gs_rt\"><a href=\"https://e.org/1\">T1</a></h3>",
+        "<div class=\"gs_a\">A - V, 2020 - e.org</div>",
+        "<div class=\"gs_fl\"><a href=\"/scholar?cites=11\">Cited by 2</a></div>",
+        "</div></div></div></body></html>")
+    empty <- "<html><body><div id=\"gs_res_ccl_mid\"></div></body></html>"
+
+    requests <- character(0)
+    with_mocked_bindings(
+        get_scholar_resp = function(url, attempts_left = 5) {
+            requests <<- c(requests, url)
+            structure(list(status_code = 200L, url = url), class = "response")
+        },
+        read_scholar_html = function(resp) {
+            xml2::read_html(if (grepl("start=0$", resp$url)) one_row else empty)
+        },
+        {
+            out <- scholar:::parse_citation_list("11", "p1", max_pages = 5, delay = 0)
+        },
+        .package = "scholar"
+    )
+
+    expect_equal(nrow(out), 1)
+    expect_length(requests, 1)
+})
+
+test_that("a full page does ask for the next one", {
+    full <- paste0("<html><body><div id=\"gs_res_ccl_mid\">", paste(rep(
+        paste0("<div class=\"gs_r gs_or gs_scl\" data-cid=\"X\"><div class=\"gs_ri\">",
+               "<h3 class=\"gs_rt\"><a href=\"https://e.org/t\">T</a></h3>",
+               "<div class=\"gs_a\">A - V, 2020 - e.org</div>",
+               "<div class=\"gs_fl\"><a href=\"/scholar?cites=11\">Cited by 1</a></div>",
+               "</div></div>"), 10L), collapse = ""), "</div></body></html>")
+    empty <- "<html><body><div id=\"gs_res_ccl_mid\"></div></body></html>"
+
+    requests <- character(0)
+    with_mocked_bindings(
+        get_scholar_resp = function(url, attempts_left = 5) {
+            requests <<- c(requests, url)
+            structure(list(status_code = 200L, url = url), class = "response")
+        },
+        read_scholar_html = function(resp) {
+            xml2::read_html(if (grepl("start=0$", resp$url)) full else empty)
+        },
+        {
+            out <- scholar:::parse_citation_list("11", "p1", max_pages = 3, delay = 0)
+        },
+        .package = "scholar"
+    )
+
+    expect_equal(nrow(out), 10)
+    ## page two is fetched because page one was full, and stops there because
+    ## it comes back empty
+    expect_length(requests, 2)
+    expect_match(requests[[2]], "start=10")
+})

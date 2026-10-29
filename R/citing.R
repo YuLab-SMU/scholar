@@ -106,12 +106,18 @@ resolve_citation_keys <- function(publications, pubid) {
     })
 }
 
+## Scholar serves a result list ten entries at a time, and `citing_page_url()`
+## advances `start` by this much. A page carrying fewer than that is the last
+## one, so asking for the next page would be a request whose answer is already
+## known - on an endpoint that blocks clients which ask too often.
+citing_page_size <- 10L
+
 parse_citation_list <- function(cid, pubid, max_pages, delay) {
     site <- getOption("scholar_site")
     collected <- list()
 
     for (page in seq_len(max_pages)) {
-        url <- citing_page_url(site, cid, start = (page - 1L) * 10L)
+        url <- citing_page_url(site, cid, start = (page - 1L) * citing_page_size)
         resp <- get_scholar_resp(url)
         if (is.null(resp)) break
 
@@ -120,6 +126,7 @@ parse_citation_list <- function(cid, pubid, max_pages, delay) {
         rows$pubid <- pubid
         collected[[length(collected) + 1L]] <- rows
 
+        if (nrow(rows) < citing_page_size) break
         if (page < max_pages && delay > 0) Sys.sleep(delay)
     }
 
