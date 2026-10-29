@@ -123,11 +123,11 @@ get_scholar_resp <- function(url, attempts_left = 5) {
                 ), key = "status:404")
                 return(NULL)
             }
+            ## No budget check here: a 404 means the address is wrong, and
+            ## `attempts_left` already bounds the retries. Consulting the
+            ## rate-limit budget would report a mistyped ID as 'Google Scholar
+            ## is rate limiting this connection'.
             wait <- scholar_backoff_delay(attempt)
-            if (scholar_wait_used() + wait > scholar_retry_budget()) {
-                scholar_give_up_rate_limited()
-                return(NULL)
-            }
             scholar_wait_spent(wait)
             scholar_sleep(wait)
             next

@@ -1,4 +1,6 @@
-# scholar 1.0.0.019
+# scholar 1.0.0.020
+
++ stop reporting a 404 as rate limiting: the retry path for a wrong URL consulted the rate-limit waiting budget, so with the small budget this package recommends for CI a mistyped ID was announced as 'Google Scholar is rate limiting this connection' (2026-10-29, Thu, jkeirstead#123)
 
 + make the message guard actually guard: it looked for exactly four spaces after a newline, while the leak that shipped was twelve, so it passed on the very defect it was written for. It now flags four or more, allows the deliberate two-space continuation, and a self-check proves the detector detects (2026-10-29, Thu)
 

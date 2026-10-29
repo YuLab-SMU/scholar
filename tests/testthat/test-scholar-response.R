@@ -317,3 +317,44 @@ test_that("the waiting budget covers the whole session, not one request", {
     ## the session
     expect_equal(calls, 1)
 })
+
+test_that("a 404 is never reported as rate limiting", {
+    ## A small waiting budget is what a CI job is told to set, and it used to
+    ## turn a mistyped URL into 'Google Scholar is rate limiting this
+    ## connection', sending people to look for a limit that was not there.
+    withr::local_options(list(scholar_warned = NULL, scholar_retry_budget = 1,
+                              scholar_wait_used = 0))
+    with_mocked_bindings(
+        scholar_get = function(url, handle) {
+            scholar_response(404L, "https://scholar.google.com/citations?user=wrong")
+        },
+        scholar_handle = function() NULL,
+        scholar_sleep = function(time) NULL,
+        {
+            expect_warning(
+                expect_null(get_scholar_resp("https://scholar.google.com/citations",
+                                             attempts_left = 3)),
+                "Page 404")
+        },
+        .package = "scholar"
+    )
+})
+
+test_that("a spent budget still stops a rate-limited request", {
+    ## the budget must keep working where it belongs
+    withr::local_options(list(scholar_warned = NULL, scholar_retry_budget = 1,
+                              scholar_wait_used = 5))
+    with_mocked_bindings(
+        scholar_get = function(url, handle) {
+            scholar_response(429L, "https://scholar.google.com/citations")
+        },
+        scholar_handle = function() NULL,
+        scholar_sleep = function(time) NULL,
+        {
+            expect_warning(
+                expect_null(get_scholar_resp("https://scholar.google.com/citations")),
+                "waiting budget")
+        },
+        .package = "scholar"
+    )
+})
