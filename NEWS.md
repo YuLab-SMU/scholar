@@ -1,4 +1,6 @@
-# scholar 1.0.0.024
+# scholar 1.0.0.025
+
++ round `max_results` down to a whole number in `search_openalex_authors()`: a fraction was written into the request as `per-page=5.5`, which OpenAlex answers with HTTP 400, so the caller saw 'OpenAlex answered HTTP 400' instead of getting five authors (2026-10-29, Thu)
 
 + stop asking for the next page of a citing list once a page comes back short: the answer was already known, and every needless request gives Scholar another reason to refuse the next one (2026-10-29, Thu)
 

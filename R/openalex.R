@@ -45,8 +45,12 @@ search_openalex_authors <- function(name, max_results = 10) {
         is.na(max_results) || max_results < 1) {
         stop("`max_results` must be a single positive number.", call. = FALSE)
     }
+    ## OpenAlex rejects a fractional `per-page` with HTTP 400, which a caller
+    ## would meet as the unhelpful 'OpenAlex answered HTTP 400'. Rounding down
+    ## is what a count means here: ask for at most this many.
+    max_results <- as.integer(floor(max_results))
 
-    url <- openalex_authors_url(name, min(max_results, 50))
+    url <- openalex_authors_url(name, min(max_results, 50L))
     resp <- tryCatch(httr::GET(url, httr::timeout(30)), error = function(e) NULL)
     if (is.null(resp) || httr::status_code(resp) >= 400) {
         status <- if (is.null(resp)) "could not be reached" else

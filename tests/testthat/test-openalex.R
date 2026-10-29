@@ -77,3 +77,23 @@ test_that("a real lookup finds the author", {
     expect_gte(top$h_index, 1)
     expect_match(top$openalex_id, "^A[0-9]+$")
 })
+
+test_that("a fractional max_results is asked for as a whole number", {
+    seen <- NULL
+    with_mocked_bindings(
+        GET = function(url, ...) {
+            seen <<- url
+            structure(list(status_code = 200L, url = url,
+                           content = charToRaw('{"results":[]}')),
+                      class = "response")
+        },
+        .package = "httr",
+        {
+            out <- search_openalex_authors("someone", max_results = 5.5)
+        }
+    )
+    ## a fraction in per-page is answered with HTTP 400 by OpenAlex
+    expect_match(seen, "per-page=5(&|$)")
+    expect_false(grepl("per-page=5\\.5", seen))
+    expect_equal(nrow(out), 0)
+})
