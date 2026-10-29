@@ -1,4 +1,6 @@
-# scholar 1.0.0.013
+# scholar 1.0.0.014
+
++ cap the total time one process will spend waiting for a rate-limited Scholar (`scholar_retry_budget`, 60 seconds by default): past that a refused request is abandoned at once, because a CI job that keeps waiting on a refusing IP only lengthens its own lockout — the polite backoff added this week turned a blocked check run from three minutes into eighteen (2026-10-29, Thu)
 
 + add `get_h_index_history()`, which rebuilds the h-index year by year from each publication's citation history, so a profile reads as a trajectory instead of a single number; the histories are cached and uncited publications are skipped, since they cannot enter an h-index in any year (2026-10-29, Thu, jkeirstead#73)
 

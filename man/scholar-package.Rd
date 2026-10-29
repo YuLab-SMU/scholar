@@ -108,6 +108,11 @@ scholars and predicting h-index scores based on past publication records.
     \item \code{scholar_retry_delay} and \code{scholar_retry_max_delay}: the
       first wait and the ceiling for the exponentially growing wait before a
       retry. Defaults to 1 and 30 seconds.
+    \item \code{scholar_retry_budget} (\code{SCHOLAR_RETRY_BUDGET}): how many
+      seconds one process may spend waiting for Scholar in total, across every
+      request. Default 60. Past that a rate-limited request is abandoned at
+      once, since a CI job that keeps hammering a refusing server only extends
+      its own lockout. Reset it with \code{options(scholar_wait_used = 0)}.
     \item \code{scholar_cookie} (\code{SCHOLAR_COOKIE}) and
       \code{scholar_cookie_file} (\code{SCHOLAR_COOKIE_FILE}): the session to
       present, see \code{\link{set_scholar_cookie}}. Entries from the option

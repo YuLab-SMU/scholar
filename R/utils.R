@@ -123,12 +123,23 @@ get_scholar_resp <- function(url, attempts_left = 5) {
                 ), key = "status:404")
                 return(NULL)
             }
-            scholar_sleep(scholar_backoff_delay(attempt))
+            wait <- scholar_backoff_delay(attempt)
+            if (scholar_wait_used() + wait > scholar_retry_budget()) {
+                scholar_give_up_rate_limited()
+                return(NULL)
+            }
+            scholar_wait_spent(wait)
+            scholar_sleep(wait)
             next
         }
 
         if (status == 429) {
             delay <- scholar_backoff_delay(attempt, retry_after = scholar_retry_after(resp))
+            if (scholar_wait_used() + delay > scholar_retry_budget()) {
+                scholar_give_up_rate_limited()
+                return(NULL)
+            }
+            scholar_wait_spent(delay)
             if (!is.finite(delay) || attempt == attempts_left) {
                 warn_scholar(paste0(
                     "Google Scholar is rate limiting this connection (HTTP 429).",
@@ -530,6 +541,40 @@ scholar_backoff_delay <- function(attempt, retry_after = NA_real_) {
     delay <- base * 2^(attempt - 1L)
     jitter <- suppressWarnings(stats::runif(1, min = 0, max = 0.25 * delay))
     min(delay + jitter, cap)
+}
+
+#' How long this process is willing to spend waiting for Scholar
+#'
+#' Retrying a rate-limited endpoint is polite up to a point: a shared IP that is
+#' being refused can turn a loop over a handful of queries into a wait of
+#' several minutes, which is exactly what a CI job must not do - it makes the
+#' refusal longer, not shorter. Once the accumulated waiting passes
+#' `options(scholar_retry_budget)` (60 seconds by default), a rate-limited
+#' request is abandoned with the reason instead of queued behind more delays.
+#' @noRd
+scholar_retry_budget <- function() {
+    scholar_numeric_option("scholar_retry_budget", "SCHOLAR_RETRY_BUDGET", 60)
+}
+
+scholar_wait_used <- function() {
+    used <- getOption("scholar_wait_used", 0)
+    if (is.numeric(used) && length(used) == 1 && is.finite(used)) used else 0
+}
+
+scholar_wait_spent <- function(seconds) {
+    options("scholar_wait_used" = scholar_wait_used() + seconds)
+}
+
+scholar_give_up_rate_limited <- function() {
+    warn_scholar(paste0(
+        "Google Scholar is rate limiting this connection and the waiting budget ",
+        "for this session is spent (options(scholar_retry_budget), ",
+        scholar_numeric_option("scholar_retry_budget", "SCHOLAR_RETRY_BUDGET", 60),
+        " seconds), so no further attempt is made.\n",
+        "  Retry later from a different IP, spread requests over time with ",
+        "options(scholar_request_delay = 1), or raise the budget if this is a ",
+        "long-running job on a connection Google does not distrust."),
+        key = "status:429")
 }
 
 scholar_numeric_option <- function(option, envvar, default) {

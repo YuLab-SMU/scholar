@@ -235,3 +235,61 @@ test_that("the request settings reach httr as separate arguments", {
     header_names <- names(settings[[2]]$headers)
     expect_equal(header_names, c("Accept", "Accept-Encoding", "Accept-Language"))
 })
+
+test_that("a spent waiting budget stops retrying a rate-limited server", {
+    withr::local_options(list(scholar_warned = NULL, scholar_retry_budget = 3,
+                              scholar_wait_used = 0, scholar_retry_delay = 1,
+                              scholar_retry_max_delay = 30))
+    calls <- 0
+    fake_get <- function(url, handle) {
+        calls <<- calls + 1
+        scholar_response(429L, "https://scholar.google.com/citations")
+    }
+
+    with_mocked_bindings(
+        scholar_get = fake_get,
+        scholar_handle = function() NULL,
+        scholar_sleep = function(time) NULL,
+        {
+            expect_warning(
+                expect_null(get_scholar_resp("https://scholar.google.com/citations",
+                                             attempts_left = 5)),
+                "waiting budget")
+        },
+        .package = "scholar"
+    )
+
+    ## the first refusal waits about a second, the second about two; the third
+    ## would pass a three second budget, so the request is abandoned at two
+    expect_equal(calls, 2)
+    expect_lte(getOption("scholar_wait_used"), 3)
+})
+
+test_that("the waiting budget covers the whole session, not one request", {
+    withr::local_options(list(scholar_warned = NULL, scholar_retry_budget = 3,
+                              scholar_wait_used = 2.9, scholar_retry_delay = 1,
+                              scholar_retry_max_delay = 30))
+    calls <- 0
+    fake_get <- function(url, handle) {
+        calls <<- calls + 1
+        scholar_response(429L, "https://scholar.google.com/citations")
+    }
+
+    with_mocked_bindings(
+        scholar_get = fake_get,
+        scholar_handle = function() NULL,
+        scholar_sleep = function(time) NULL,
+        {
+            expect_warning(
+                expect_null(get_scholar_resp("https://scholar.google.com/citations",
+                                             attempts_left = 5)),
+                "waiting budget")
+        },
+        .package = "scholar"
+    )
+
+    ## a hundred seconds left of nothing: the next wait would break the budget,
+    ## so one refusal is enough and the server is not hammered for the rest of
+    ## the session
+    expect_equal(calls, 1)
+})
