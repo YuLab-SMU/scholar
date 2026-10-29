@@ -1,4 +1,6 @@
-# scholar 1.0.0.027
+# scholar 1.0.0.028
+
++ stop `get_scholar_id()` trying every spelling of a name once the first query cannot be fetched at all: a refused or unreachable search answers the same way to all of them, so the remaining variants were four more requests spent learning nothing (2026-10-29, Thu, jkeirstead#91)
 
 + catch a request that fails before it gets a reply — a TLS handshake that does not complete, a reset, a dead proxy — and report it, instead of letting libcurl's error escape and kill the caller: a handshake with the sign-in host is treated as the refusal it is, anything else is retried and then reported as a connection problem (2026-10-29, Thu, jkeirstead#123)
 

@@ -357,8 +357,13 @@ get_scholar_id <- function(last_name="", first_name="", affiliation = NA) {
     url <- paste0(site, '/citations?view_op=search_authors&mauthors=', mval, '&hl=en&oi=ao')
     page <- get_scholar_resp(url)
     if (is.null(page)) {
+        ## NULL means the page could not be fetched at all - refused, rate
+        ## limited, or the connection failed - and never 'no matches', which is
+        ## a 200 page with an empty result list. The other spellings of the name
+        ## would meet the same wall, so trying them spends five more requests to
+        ## learn nothing.
         refused <- TRUE
-        next
+        break
     }
     aa <- scholar_response_text(page)
     doc <- read_scholar_html(page)

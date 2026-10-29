@@ -60,3 +60,45 @@ test_that("search_scholar_ids validates scalar inputs", {
   expect_error(search_scholar_ids("hao xu", max_pages = NA_real_), "positive number")
   expect_error(search_scholar_ids("hao xu", delay = Inf), "non-negative number")
 })
+
+test_that("a refused author search is not retried with every spelling of the name", {
+    ## get_scholar_id tries several query variants. When the first one cannot be
+    ## fetched at all, the rest meet the same wall; each is another request
+    ## against an endpoint that is refusing us.
+    withr::local_options(list(scholar_warned = NULL, scholar_degraded = TRUE))
+    urls <- character(0)
+    with_mocked_bindings(
+        get_scholar_resp = function(url, attempts_left = 5) {
+            urls <<- c(urls, url)
+            NULL
+        },
+        {
+            out <- suppressWarnings(get_scholar_id(first_name = "a", last_name = "b",
+                                                   affiliation = "c"))
+        },
+        .package = "scholar"
+    )
+    expect_true(is.na(out))
+    expect_length(urls, 1)
+})
+
+test_that("a page with no matching author still tries the other variants", {
+    ## The opposite case must keep working: an answer with no ids is not a
+    ## refusal, so the next spelling is worth a try.
+    withr::local_options(list(scholar_warned = NULL))
+    urls <- character(0)
+    with_mocked_bindings(
+        get_scholar_resp = function(url, attempts_left = 5) {
+            urls <<- c(urls, url)
+            structure(list(status_code = 200L, url = url), class = "response")
+        },
+        read_scholar_html = function(resp) xml2::read_html("<html><body></body></html>"),
+        scholar_response_text = function(resp) "<html><body></body></html>",
+        {
+            out <- suppressMessages(get_scholar_id(first_name = "a", last_name = "b"))
+        },
+        .package = "scholar"
+    )
+    expect_true(is.na(out))
+    expect_gt(length(urls), 1)
+})
