@@ -100,15 +100,22 @@ test_that("the reason for a refusal is named correctly", {
         scholar_response(403, "https://scholar.google.com/scholar")))
 })
 
-test_that("the advice matches the cause and carries no stray indentation", {
-    ## a newline in the middle of a message would be followed by the source's
-    ## own indentation, which reads as broken output
-    no_indent <- function(txt) expect_false(grepl("\n    [^ ]", txt))
+test_that("no message leaks the indentation of its source line", {
+    ## A string written across source lines keeps the newline and the spaces
+    ## that follow it, so the warning arrives with a ragged gap in the middle of
+    ## a sentence. Four or more spaces after a newline is a leak; the two-space
+    ## continuation this package uses on purpose is not.
+    leaks_indentation <- function(txt) grepl("\n {4,}[^ ]", txt)
+
+    ## the detector has to detect, or it guards nothing: this is the exact shape
+    ## that shipped once and that the previous, weaker check let through
+    expect_true(leaks_indentation(paste0("first line\n", strrep(" ", 12), "second line")))
+    expect_false(leaks_indentation("first line\n  second line"))
 
     sign_in <- scholar:::scholar_blocked_message(
         scholar_response(200, "https://accounts.google.com/Login"), 200, "sign-in")
     expect_match(sign_in, "sign-in page")
-    no_indent(sign_in)
+    expect_false(leaks_indentation(sign_in))
 
     js_captcha <- scholar:::scholar_blocked_message(
         scholar_response(200, "https://scholar.google.com/scholar?cites=1"),
@@ -117,12 +124,12 @@ test_that("the advice matches the cause and carries no stray indentation", {
     ## a page served from Scholar's own host must not be blamed on google.com/sorry
     expect_false(grepl("google.com/sorry", js_captcha, fixed = TRUE))
     expect_match(js_captcha, "set_scholar_cookie")
-    no_indent(js_captcha)
+    expect_false(leaks_indentation(js_captcha))
 
     refused <- scholar:::scholar_blocked_message(
         scholar_response(403, "https://scholar.google.com/scholar"), 403, NULL)
     expect_match(refused, "HTTP 403")
-    no_indent(refused)
+    expect_false(leaks_indentation(refused))
 })
 
 test_that("get_scholar_resp does not retry a request Scholar sent to sign-in", {

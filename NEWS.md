@@ -1,4 +1,6 @@
-# scholar 1.0.0.018
+# scholar 1.0.0.019
+
++ make the message guard actually guard: it looked for exactly four spaces after a newline, while the leak that shipped was twelve, so it passed on the very defect it was written for. It now flags four or more, allows the deliberate two-space continuation, and a self-check proves the detector detects (2026-10-29, Thu)
 
 + report a captcha page served from Scholar's own host as that, instead of describing it as a redirect to google.com/sorry which never happened: the body-level captcha now has its own type, and a plain non-200 status no longer reaches `switch()` with a NULL selector (2026-10-29, Thu, jkeirstead#123)
 
