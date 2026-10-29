@@ -147,10 +147,6 @@ parse_citing_page <- function(doc) {
     titles <- vapply(items, citing_title, character(1))
     links <- vapply(items, citing_link, character(1))
     bylines <- vapply(items, citing_byline, character(1))
-    keys <- vapply(items, function(item) {
-        key <- rvest::html_attr(xml2::xml_parent(item), "data-cid")
-        if (length(key) != 1 || is.na(key)) NA_character_ else key
-    }, character(1))
     cites <- vapply(items, citing_count, numeric(1))
     cids <- vapply(items, citing_citation_key, character(1))
 

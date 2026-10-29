@@ -1,4 +1,6 @@
-# scholar 1.0.0.022
+# scholar 1.0.0.023
+
++ drop an unused walk over every result in `parse_citing_page()`: it read a `data-cid` attribute into a variable nothing consumed, so one extra step ran per citing work for no reason (2026-10-29, Thu)
 
 + delete `get_journal_stats()`, left with no caller once `get_journalrank()` stopped downloading. It was unexported, so nothing outside the package could notice either way, and it was 57 lines of code that no longer ran (2026-10-29, Thu)
 
