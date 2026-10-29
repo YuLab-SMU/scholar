@@ -1,4 +1,6 @@
-# scholar 1.0.0.007
+# scholar 1.0.0.008
+
++ document what to do when Scholar refuses a request: the README and the vignette now name the four ways out, list every setting the package reads, and explain why author search and the cited-by list come back empty on a server (2026-10-29, Thu, jkeirstead#123, jkeirstead#91)
 
 + send the configured session as a cookie rather than as a `Cookie` header, so it is merged with the cookies Google sets instead of replacing them and survives the redirect to a sign-in host (2026-10-29, Thu, jkeirstead#91)
 + refuse to send a session to a mirror that is not a Google host, and say so, because a session is a credential (2026-10-29, Thu)

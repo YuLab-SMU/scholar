@@ -45,6 +45,12 @@ search_scholar_ids("Richard Feynman", max_pages = 1)
 get_scholar_id(first_name = "Richard", last_name = "Feynman")
 ```
 
+Google now requires a signed-in session for author search, so these two can
+return nothing on a machine where a browser would show results. The package says
+so instead of failing quietly. Copy the ID out of the profile URL, present a
+browser session with `set_scholar_cookie()`, or resolve the person with
+[OpenAlex](https://api.openalex.org), which is made for programmatic use.
+
 If you copied a full URL, `tidy_id()` keeps only the useful part:
 
 ```r
@@ -137,12 +143,20 @@ A few useful helpers are easy to miss:
 - `get_publication_data_extended()` extracts extra metadata from a publication detail page.
 - `get_complete_authors()` completes author lists that Google Scholar truncates with `...`.
 - `author_position()` checks where an author appears in publication author lists.
+- `get_citing_articles()` lists the works that cite a publication, the names behind a citation count.
 - `get_journalrank()` queries SCImago journal ranking data.
 - `predict_h_index()` implements the Acuna et al. h-index prediction model; treat it as illustrative, not prophecy.
 
 ## Practical Notes
 
 - Google Scholar may rate-limit repeated requests; small, focused queries are more reliable.
+- Hosted environments are the hard case. A shared or data-centre IP is answered
+  with a captcha or a sign-in page, so `get_profile()` works on your laptop and
+  returns `NA` on shinyapps.io or in GitHub Actions. Read the warning: it now
+  names the cause. Then either run the fetching step somewhere a person browses
+  and hand the data to the app, present a session with `set_scholar_cookie()`,
+  or point at a mirror with `set_scholar_mirror()` — and note that the session
+  is never sent to a mirror that is not Google's.
 - `get_publications()` caches results with `R.cache`; use `flush = TRUE` when you need fresh data.
 - Some Scholar profiles hide fields or have incomplete metadata, so `NA` and empty values are normal.
 - For larger analyses, fetch publication data once, save it locally, and analyse the saved data frame.
