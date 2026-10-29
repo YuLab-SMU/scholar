@@ -60,7 +60,13 @@ issue 号：本仓库直接写 `#N`；上游 `jkeirstead/scholar` 必须写 `jke
 8. **别把"失败"缓存下来**。`saveCache()` 不区分"真的没有数据"和"这次请求被拒"（两者都是 0 行），
    一次临时失败会被固化成永久结论（本例：某篇论文被记为从未被引，静默拉低 h-index）。
    只缓存**有内容**的结果。
-9. `make rd` 会把 `NAMESPACE` 重排成多行 `importFrom(...)` 并抬 `Config/roxygen2/version`——
+9. **传输层异常会绕过所有状态码判断**。`httr::GET()` 在拿到响应**之前**就失败时（TLS 握手失败、
+   连接重置、DNS 不通、代理挂了）是**抛异常**而不是返回 response，`get_scholar_resp()` 若只按
+   `status_code` 分支就完全兜不住，调用方脚本直接崩——实测在 `R CMD check` 的示例里炸过
+   （`SSL connect error [accounts.google.com]`，即 302 跳登录页后握手失败）。
+   现已在循环顶部 `tryCatch` 兜住：跳到 Google 登录主机的那类失败按"拒绝"处理（不重试），
+   其余按"连接问题"处理（重试，用尽后报出原始 curl 文本）。
+10. `make rd` 会把 `NAMESPACE` 重排成多行 `importFrom(...)` 并抬 `Config/roxygen2/version`——
    这是 roxygen 8.1.1 的正常噪声，别当成别人的改动。
 
 ## `make check` 的实测耗时（2026-10-29，同一台机器）

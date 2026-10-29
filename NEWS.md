@@ -1,4 +1,6 @@
-# scholar 1.0.0.026
+# scholar 1.0.0.027
+
++ catch a request that fails before it gets a reply — a TLS handshake that does not complete, a reset, a dead proxy — and report it, instead of letting libcurl's error escape and kill the caller: a handshake with the sign-in host is treated as the refusal it is, anything else is retried and then reported as a connection problem (2026-10-29, Thu, jkeirstead#123)
 
 + report every colleague in `get_profile()`, not the twenty the profile sidebar happens to show: the cap was left behind when the colleagues list replaced the sidebar, so a well-collaborated profile silently lost names and `get_profile()` disagreed with `get_coauthors()` about the same person (2026-10-29, Thu)
 

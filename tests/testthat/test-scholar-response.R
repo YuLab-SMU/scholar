@@ -355,3 +355,60 @@ test_that("a spent budget still stops a rate-limited request", {
         .package = "scholar"
     )
 })
+
+test_that("a TLS failure on the way to the sign-in page is reported as that", {
+    ## This is the failure that stopped R CMD check: the request is redirected
+    ## to accounts.google.com and the handshake with it does not complete, so
+    ## libcurl raises instead of answering.
+    withr::local_options(list(scholar_warned = NULL))
+    calls <- 0
+    with_mocked_bindings(
+        scholar_get = function(url, handle) {
+            calls <<- calls + 1
+            stop("SSL connect error [accounts.google.com]: OpenSSL SSL_connect: ",
+                 "SSL_ERROR_SYSCALL in connection to accounts.google.com:443")
+        },
+        scholar_handle = function() NULL,
+        scholar_sleep = function(time) NULL,
+        {
+            expect_warning(
+                expect_null(get_scholar_resp(
+                    "https://scholar.google.com/citations?view_op=search_authors")),
+                "sign-in page")
+        },
+        .package = "scholar"
+    )
+    ## a refusal is not retried
+    expect_equal(calls, 1)
+})
+
+test_that("a generic transport error is retried and then reported as a connection problem", {
+    withr::local_options(list(scholar_warned = NULL))
+    calls <- 0
+    with_mocked_bindings(
+        scholar_get = function(url, handle) {
+            calls <<- calls + 1
+            stop("Failed to connect to scholar.google.com port 443")
+        },
+        scholar_handle = function() NULL,
+        scholar_sleep = function(time) NULL,
+        {
+            expect_warning(
+                expect_null(get_scholar_resp("https://scholar.google.com/citations",
+                                             attempts_left = 3)),
+                "connection problem")
+        },
+        .package = "scholar"
+    )
+    ## retried while attempts remain, because a reset may well be transient
+    expect_equal(calls, 3)
+})
+
+test_that("no warning text leaks source indentation", {
+    leak <- function(txt) grepl("\n {4,}[^ ]", txt)
+    withr::local_options(list(scholar_warned = NULL))
+    transport <- scholar:::scholar_transport_message(
+        simpleError("SSL connect error [accounts.google.com]"), sign_in = TRUE)
+    expect_false(leak(transport))
+    expect_false(leak(scholar:::scholar_transport_message(simpleError("reset by peer"))))
+})

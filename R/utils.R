@@ -105,7 +105,28 @@ get_scholar_resp <- function(url, attempts_left = 5) {
 
     for (attempt in seq_len(attempts_left)) {
 
-        resp <- scholar_get(url, handle = scholar_handle())
+        ## A request can fail before any response exists - a TLS handshake that
+        ## does not complete, a reset, a dead proxy - and then libcurl raises
+        ## instead of answering. Letting that escape kills the caller's script,
+        ## which is what it did inside an example during R CMD check, so the
+        ## error is caught here and turned into the same kind of report the
+        ## status codes get.
+        fetched <- tryCatch(scholar_get(url, handle = scholar_handle()),
+                            error = function(e) e)
+        if (inherits(fetched, "error")) {
+            if (scholar_sign_in_transport(fetched)) {
+                warn_scholar(scholar_transport_message(fetched, sign_in = TRUE),
+                             key = "blocked:sign-in")
+                return(NULL)
+            }
+            if (attempt == attempts_left) {
+                warn_scholar(scholar_transport_message(fetched), key = "transport")
+                return(NULL)
+            }
+            scholar_sleep(scholar_backoff_delay(attempt))
+            next
+        }
+        resp <- fetched
         status <- status_code_or_zero(resp)
         blocked <- scholar_block_type(resp, status)
 
@@ -289,7 +310,51 @@ scholar_blocked_message <- function(resp, status, type = NULL) {
                                 "browser to prove it is not a robot, so the ",
                                 "response carries no data."),
         paste0("Google Scholar refused the request (HTTP ", status, ")."))
-    paste0(lead, "\n",
+    paste0(lead, "\n", scholar_advice())
+}
+
+#' Was a transport failure really the sign-in redirect failing to complete?
+#'
+#' Google answers an anonymous author search with a redirect to its sign-in
+#' host, and when the handshake with that host does not complete, the error
+#' names the host instead of a status. Retrying cannot change the answer, and
+#' the reason is the same refusal the successful redirect reports.
+#'
+#' @param error the condition raised by [httr::GET()]
+#' @return \code{TRUE} when the failure happened on the way to a Google sign-in
+#' @noRd
+scholar_sign_in_transport <- function(error) {
+    grepl("accounts\\.google\\.[a-z.]+|google\\.com/sorry|ServiceLogin|/signin",
+          conditionMessage(error), ignore.case = TRUE)
+}
+
+#' Explain a request that never produced a response
+#'
+#' @param error the condition raised by [httr::GET()]
+#' @param sign_in whether it failed on the way to a Google sign-in
+#' @return the message to warn with
+#' @noRd
+scholar_transport_message <- function(error, sign_in = FALSE) {
+    detail <- conditionMessage(error)
+    if (sign_in) {
+        return(paste0(
+            "The connection failed on the way to Google Scholar's sign-in page, ",
+            "which is the same refusal as an unreachable session.\n",
+            scholar_advice(), "\n",
+            "  The transport error was: ", detail))
+    }
+    paste0(
+        "The request never reached a reply: ", detail, "\n",
+        "  That is a connection problem, not a wrong ID or URL - check the ",
+        "network, and the proxy settings if this machine needs one (",
+        "httr reads http_proxy and https_proxy).\n",
+        "  Raise options(scholar_timeout) if the connection is merely slow.")
+}
+
+#' The three ways out of a refusal, shared by every refusal message
+#' @noRd
+scholar_advice <- function() {
+    paste0(
         "  This is what happens when requests come from an IP that Google does not\n",
         "  trust, typically a hosted application or a CI runner, and it is not a\n",
         "  problem with the ID or the URL. Carry the session of a browser that can\n",
