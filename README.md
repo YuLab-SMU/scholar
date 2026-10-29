@@ -144,7 +144,9 @@ A few useful helpers are easy to miss:
 - `get_complete_authors()` completes author lists that Google Scholar truncates with `...`.
 - `author_position()` checks where an author appears in publication author lists.
 - `get_citing_articles()` lists the works that cite a publication, the names behind a citation count.
-- `search_openalex_authors()` finds authors and their metrics in OpenAlex, without a session. `get_journalrank()` is deprecated: SCImago no longer serves its table to scripts.
+- `get_h_index_history()` rebuilds the h-index year by year, so you can see how a career was built rather than where it stands.
+- `search_openalex_authors()` finds authors and their metrics in OpenAlex, without the session Google Scholar now demands for author search.
+- `get_journalrank()` is deprecated and downloads nothing: SCImago answers scripts with a JavaScript challenge, and its table carries no published licence. Use OpenAlex (`https://api.openalex.org/sources?search=Nature`) for journal metrics.
 - `predict_h_index()` implements the Acuna et al. h-index prediction model; treat it as illustrative, not prophecy.
 
 ## Practical Notes

@@ -200,6 +200,32 @@ top <- pubs[which.max(pubs$cites), ]
 get_citing_articles(id, top$pubid, publications = pubs, max_pages = 2)
 ```
 
+# How the h-index Grew
+
+`get_profile()` reports one h-index at one moment. `get_h_index_history()`
+rebuilds it year by year from the citation history of each publication, which is
+the difference between knowing someone is at h-index 39 and knowing whether they
+got there in five years or thirty.
+
+```{r h-index-history, eval=FALSE}
+history <- get_h_index_history(id, delay = 1)
+head(history)
+```
+
+```{r h-index-history-plot, eval=FALSE}
+ggplot(history, aes(year, h_index)) +
+  geom_step(direction = "hv") +
+  labs(x = NULL, y = "h-index",
+       title = "How the h-index accumulated",
+       subtitle = "each step is a year in which another paper reached the threshold")
+```
+
+The cost is one request per cited publication, so the histories are cached with
+`R.cache` and a second call for the same profile makes no requests. Pass
+`flush = TRUE` to refresh. Publications with no citations are skipped, since they
+cannot enter an h-index in any year, and the curve is only as long as the years
+Google reports per publication.
+
 # Citation Metrics
 
 `get_publication_metrics()` calculates metrics from a publication data frame.

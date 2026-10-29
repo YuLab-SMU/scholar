@@ -1,4 +1,6 @@
-# scholar 1.0.0.011
+# scholar 1.0.0.012
+
++ add `get_h_index_history()`, which rebuilds the h-index year by year from each publication's citation history, so a profile reads as a trajectory instead of a single number; the histories are cached and uncited publications are skipped, since they cannot enter an h-index in any year (2026-10-29, Thu, jkeirstead#73)
 
 + `get_journalrank()` is deprecated and fetches nothing: SCImago answers a script with a JavaScript challenge, and the table has no published licence. It now explains where journal metrics can honestly come from (OpenAlex) instead of failing after a download that cannot succeed, and the archived-copy fallback added the same week is gone (2026-10-29, Thu)
 
