@@ -120,3 +120,49 @@ test_that("a profile without listed colleagues yields no coauthors", {
 
   expect_equal(nrow(out), 0)
 })
+
+test_that("get_profile keeps every colleague, not just the sidebar page", {
+    ## The sidebar shows twenty names; the colleagues list behind it is longer.
+    ## Capping at twenty made get_profile() and get_coauthors() disagree about
+    ## the same person.
+    many <- paste0("<html><body><div id='gsc_codb_data' data-max='25'></div>",
+        paste(vapply(seq_len(25), function(i) paste0(
+            "<div class='gs_ai'><h3 class='gs_ai_name'>",
+            "<a href='/citations?hl=en&amp;user=id", i, "AAAAJ'>Colleague ", i,
+            "</a></h3></div>"), character(1)), collapse = ""),
+        "</body></html>")
+    profile <- paste0("<html><body><div id='gsc_prf_in'>Main Author</div>",
+                      "<div class='gsc_prf_il'>Somewhere</div>",
+                      "<div class='gsc_prf_il'>topic</div>",
+                      "</body></html>")
+
+    with_mocked_bindings(
+        get_scholar_resp = function(url, attempts_left = 5) {
+            structure(list(status_code = 200L, url = url), class = "response")
+        },
+        read_scholar_html = function(resp) {
+            xml2::read_html(if (grepl("list_colleagues", resp$url)) many else profile)
+        },
+        {
+            got <- scholar:::list_coauthors("mainAAAAJ", Inf)
+        },
+        .package = "scholar"
+    )
+    expect_equal(nrow(got), 25)
+
+    capped <- NULL
+    with_mocked_bindings(
+        get_scholar_resp = function(url, attempts_left = 5) {
+            structure(list(status_code = 200L, url = url), class = "response")
+        },
+        read_scholar_html = function(resp) {
+            xml2::read_html(if (grepl("list_colleagues", resp$url)) many else profile)
+        },
+        {
+            capped <- scholar:::list_coauthors("mainAAAAJ", 20)
+        },
+        .package = "scholar"
+    )
+    ## the cap still works when a caller asks for one
+    expect_equal(nrow(capped), 20)
+})

@@ -71,8 +71,10 @@ get_profile <- function(id) {
   ## Extract the homepage
   homepage <- page %>% html_nodes(xpath="//*/div[@id='gsc_prf_ivh']//a/@href") %>% html_text()
 
-  ## Grab all coauthors
-  coauthors <- list_coauthors(id, n_coauthors = 20) # maximum availabe in profile
+  ## Grab all coauthors. `Inf` reads the whole colleagues list: the twenty
+  ## names in the profile sidebar are only what the sidebar shows, and the
+  ## list behind it is longer - 107 for a well-collaborated profile.
+  coauthors <- list_coauthors(id, n_coauthors = Inf)
 
   ## Check 'publicly available' vs 'not publicly available' statistics
   ## (note, not actually detecting open access, just free-to view) 

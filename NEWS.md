@@ -1,4 +1,6 @@
-# scholar 1.0.0.025
+# scholar 1.0.0.026
+
++ report every colleague in `get_profile()`, not the twenty the profile sidebar happens to show: the cap was left behind when the colleagues list replaced the sidebar, so a well-collaborated profile silently lost names and `get_profile()` disagreed with `get_coauthors()` about the same person (2026-10-29, Thu)
 
 + round `max_results` down to a whole number in `search_openalex_authors()`: a fraction was written into the request as `per-page=5.5`, which OpenAlex answers with HTTP 400, so the caller saw 'OpenAlex answered HTTP 400' instead of getting five authors (2026-10-29, Thu)
 
