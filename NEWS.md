@@ -1,4 +1,6 @@
-# scholar 1.0.0.021
+# scholar 1.0.0.022
+
++ delete `get_journal_stats()`, left with no caller once `get_journalrank()` stopped downloading. It was unexported, so nothing outside the package could notice either way, and it was 57 lines of code that no longer ran (2026-10-29, Thu)
 
 + describe every refusal from the response it came from in the tests, instead of passing the refusal type by hand: a test that supplies a label the production code can never produce passes while the real message stays wrong, which is how the captcha wording survived the previous round (2026-10-29, Thu)
 

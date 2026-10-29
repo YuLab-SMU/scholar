@@ -333,9 +333,6 @@ has_publication_data <- function(papers) {
 }
 
 
-
-
-
 # ##' Get journal metrics.
 # ##'
 # ##' Get journal metrics (impact factor) for a journal list.
@@ -363,65 +360,6 @@ has_publication_data <- function(papers) {
 #     message("The impact factor data is out-of-date and we may remove this function in future release.")
 #     get_journal_stats(journals, max.distance, impactfactor)
 # }
-
-
-get_journal_stats <- function(journals, max.distance, source_data, col = "Journal") {
-    journals <- as.character(journals)
-    index <- rep(NA, length(journals))
-
-    for(i in seq_along(journals)) {
-        journal <- journals[i]
-        if(journal == ""){
-            next
-        }
-
-        closest <- agrep(journal,
-                         source_data[[col]],
-                         max.distance = max.distance,
-                         value = FALSE,
-                         ignore.case = TRUE)
-
-        if(!is.null(closest)){
-            ## agrep() returns all "close" matches
-            ## but unfortunately does not return the degree of closeness.
-
-            ## index[i] <- closest[1]
-
-
-            j <- grep(paste0("^", journal, "$"), source_data[[col]][closest], ignore.case=TRUE)
-            if (length(j) > 0) {
-                j <- j[1]
-                index[i] <- closest[j]
-                next
-            }
-
-            get_hit <- function(pattern, x) {
-                j <- grep(pattern, x, ignore.case = TRUE)
-                if (length(j) > 0) {
-                    return(j[1])
-                }
-                return(NULL)
-            }
-
-            hit <- closest[1]
-            patterns <- c(paste0("^", journal, "$"),
-                          paste0("^", journal),
-                          paste0(journal, "$"))
-            for (pp in patterns) {
-                j <- get_hit(pp, source_data[[col]][closest])
-                if (!is.null(j)) {
-                    hit <- j
-                    break
-                }
-            }
-
-            index[i] <- hit
-        }
-
-    }
-
-    return(source_data[index, ])
-}
 
 
 ##' Get journal ranking (deprecated)
@@ -481,8 +419,6 @@ parse_citation_counts <- function(nodes) {
     cites[is.na(cites)] <- 0
     cites
 }
-
-
 
 
 ##' Gets the abstract for a publication id.
