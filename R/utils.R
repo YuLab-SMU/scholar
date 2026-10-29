@@ -318,12 +318,12 @@ scholar_refused <- function() {
             key = "degraded:expired-session"))
     }
     warn_scholar(paste0(
-        "Google Scholar no longer answers author search for an anonymous client, ",
-        "so the result can be empty even when the profile exists.\n",
+        "Author search is deprecated for anonymous use: Google redirects it to a ",
+        "sign-in page, so the result can be empty even when the profile exists.\n",
         "  Carry the session of a browser that opens the page with ",
         "set_scholar_cookie(), point the package at a mirror with ",
-        "set_scholar_mirror(), or resolve authors through OpenAlex ",
-        "(https://api.openalex.org/authors?search=name).\n",
+        "set_scholar_mirror(), or search with search_openalex_authors(), which ",
+        "needs no session at all.\n",
         "  Silence this notice with options(scholar_degraded = FALSE)."),
         key = "degraded:author-search")
 }

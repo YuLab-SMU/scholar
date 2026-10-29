@@ -297,6 +297,12 @@ author_position <- function(authorlist, author){
 
 #' Search for Google Scholar ID by name and affiliation
 #'
+#' @description Deprecated for anonymous use: Google now answers author search
+#'   with a sign-in page, so this works only where a browser session has been
+#'   supplied with [set_scholar_cookie()], or through a mirror that serves the
+#'   endpoint. [search_openalex_authors()] does the same job with no session at
+#'   all and is the route to prefer for new code.
+#'
 #' @param last_name Researcher last name.
 #' @param first_name Researcher first name.
 #' @param affiliation Researcher affiliation.
@@ -306,13 +312,14 @@ author_position <- function(authorlist, author){
 #' @importFrom httr content
 #'
 #' @examples
-#' get_scholar_id(first_name = "kristopher", last_name = "mcneill")
 #' \donttest{
+#' get_scholar_id(first_name = "kristopher", last_name = "mcneill")
 #' get_scholar_id(first_name = "michael", last_name = "sander", affiliation = NA)
 #' get_scholar_id(first_name = "michael", last_name = "sander", affiliation = "eth")
 #' get_scholar_id(first_name = "michael", last_name = "sander", affiliation = "ETH Zurich")
 #' get_scholar_id(first_name = "michael", last_name = "sander", affiliation = "Mines")
 #' get_scholar_id(first_name = "james", last_name = "babler")
+#' }
 #' }
 get_scholar_id <- function(last_name="", first_name="", affiliation = NA) {
   if(!any(nzchar(c(first_name, last_name))))
@@ -390,8 +397,13 @@ get_scholar_id <- function(last_name="", first_name="", affiliation = NA) {
   if (length(ids) == 0) {
     if (refused || grepl("Sign into continue|I'm not a robot|verify", aa, ignore.case = TRUE)) {
       scholar_refused()
-    } else {
+    } else if (nzchar(scholar_cookie())) {
       message("No Scholar ID found.")
+    } else {
+      message("No Scholar ID found. Without a session, an empty author search ",
+              "is what Google returns to a client it will not serve; see ",
+              "?get_scholar_id and use search_openalex_authors() to search ",
+              "without a session.")
     }
     return(NA)
   }
@@ -424,6 +436,10 @@ get_scholar_id <- function(last_name="", first_name="", affiliation = NA) {
 #' Search Google Scholar IDs by author name
 #'
 #' Searches Google Scholar author results and returns matching author IDs.
+#' Author search is deprecated for anonymous use: Google redirects it to a
+#' sign-in page unless the request carries a browser session, see
+#' [set_scholar_cookie()]. [search_openalex_authors()] returns the same kind of
+#' candidate list without any session.
 #'
 #' @param name author search query
 #' @param max_pages maximum number of search result pages to fetch

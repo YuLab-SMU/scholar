@@ -113,6 +113,9 @@ scholars and predicting h-index scores based on past publication records.
       present, see \code{\link{set_scholar_cookie}}. Entries from the option
       win over entries of the same name in the file. Prefer the environment
       variable, since an option value can end up in the command history.
+    \item \code{scholar_openalex_mailto} (\code{SCHOLAR_OPENALEX_MAILTO}):
+      an address to identify yourself with when querying OpenAlex, which
+      routes the request to their polite pool.
     \item \code{scholar_scimago_url} (\code{SCHOLAR_SCIMAGO_URL}): source of
       the SCImago journal ranking table, either a URL or a file saved from a
       browser. When set it is the only source tried; otherwise the live

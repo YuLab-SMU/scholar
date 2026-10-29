@@ -1,4 +1,7 @@
-# scholar 1.0.0.009
+# scholar 1.0.0.010
+
++ add `search_openalex_authors()`, which finds authors and their h-index and i10-index in OpenAlex — the route that needs no session, since Google now signs in every anonymous author search (2026-10-29, Thu, jkeirstead#91)
++ deprecate `get_scholar_id()` and `search_scholar_ids()` for anonymous use, in the docs and in what they report, so an empty result no longer reads as a person who does not exist (2026-10-29, Thu, jkeirstead#91)
 
 + name the captcha that Scholar serves from its own host as what it is, so the advice no longer blames `google.com/sorry` for a page that never redirected there, and drop the indentation that leaked into the middle of the warning (2026-10-29, Thu)
 
