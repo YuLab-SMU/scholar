@@ -15,6 +15,57 @@
 #'   with Google Scholar, we recommend that you use the
 #'   \code{\link{get_scholar_resp}} function to carry out the query.
 #'
+#' @section Requests are refused, rate limited or redirected: Google Scholar has
+#'   no public API and guards the website against automated clients, so a
+#'   request can fail for reasons that have nothing to do with the ID you
+#'   passed. The package sends browser-like headers on every request and backs
+#'   off before retrying, but three outcomes are still worth recognising:
+#'
+#'   \itemize{
+#'     \item HTTP 403 on the search pages. Scholar rejects a client whose
+#'       \code{User-Agent} names a library, which is why the same query works
+#'       in a browser and not in a script.
+#'     \item A redirect to a sign-in or captcha page, reported as \emph{Google
+#'       Scholar redirected to a Google sign-in page} or \emph{answered with
+#'       its captcha page}. Some endpoints, author search among them, now sit
+#'       behind a Google login, and a shared or data-centre IP (a hosted shiny
+#'       app, a CI runner) is challenged more often than a workstation. These
+#'       requests are not retried, because retrying cannot change the answer.
+#'     \item HTTP 429, meaning this IP has asked too often. The package waits,
+#'       using the \code{Retry-After} header when Scholar supplies it and
+#'       otherwise an exponentially growing delay, and gives up with a warning
+#'       when Google asks for longer than the budget allows.
+#'   }
+#'
+#'   When a function returns \code{NA} or an empty table, read the warning: it
+#'   names the reason. To keep Scholar happy, request less (set
+#'   \code{scholar_request_delay}), fetch from a residential connection, or
+#'   point the package at a mirror with \code{\link{set_scholar_mirror}}.
+#'
+#' @section Configuration: the following options are read on every request, and
+#'   each falls back to the environment variable of the same name in upper
+#'   case, which is what to set on a server or in CI.
+#'
+#'   \itemize{
+#'     \item \code{scholar_site}: base URL of Google Scholar or a compatible
+#'       mirror, see \code{\link{set_scholar_mirror}}.
+#'     \item \code{scholar_user_agent} (\code{SCHOLAR_USER_AGENT}): the
+#'       \code{User-Agent} sent. Defaults to a desktop Chrome string.
+#'     \item \code{scholar_accept_language} (\code{SCHOLAR_ACCEPT_LANGUAGE}):
+#'       sent as \code{Accept-Language}. Defaults to \code{en-US,en;q=0.9};
+#'       Scholar serves different markup per language, so change it only if you
+#'       know why.
+#'     \item \code{scholar_request_delay} (\code{SCHOLAR_REQUEST_DELAY}):
+#'       seconds to wait before every request. Default \code{0}. Set this in
+#'       loops over many publications, where one profile fetch follows another.
+#'     \item \code{scholar_retry_delay} and \code{scholar_retry_max_delay}: the
+#'       first wait and the ceiling for the exponentially growing wait before a
+#'       retry. Defaults to 1 and 30 seconds.
+#'     \item \code{scholar_call_home} and \code{scholar_handle}: whether to seed
+#'       a session, and the curl handle holding its cookies. Both are managed
+#'       for you.
+#'   }
+#'
 #'
 #' @source The package reads data from \url{https://scholar.google.com}.  Dates
 #'   and citation counts are estimated and are determined automatically by a

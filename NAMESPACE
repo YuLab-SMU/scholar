@@ -31,25 +31,37 @@ export(search_scholar_ids)
 export(set_scholar_mirror)
 export(tidy_id)
 import(R.cache)
-importFrom(dplyr,"%>%")
-importFrom(dplyr,filter)
-importFrom(dplyr,group_by)
-importFrom(dplyr,mutate)
-importFrom(dplyr,row_number)
-importFrom(dplyr,summarize)
-importFrom(httr,GET)
-importFrom(httr,content)
+importFrom(dplyr,
+  "%>%",
+  filter,
+  group_by,
+  mutate,
+  row_number,
+  summarize
+)
+importFrom(httr,
+  GET,
+  add_headers,
+  content,
+  status_code,
+  user_agent
+)
 importFrom(rlang,.data)
-importFrom(rvest,html_attr)
-importFrom(rvest,html_children)
-importFrom(rvest,html_nodes)
-importFrom(rvest,html_table)
-importFrom(rvest,html_text)
-importFrom(stringr,str_extract)
-importFrom(stringr,str_replace)
-importFrom(stringr,str_split)
-importFrom(stringr,str_sub)
-importFrom(stringr,str_trim)
-importFrom(stringr,str_which)
+importFrom(rvest,
+  html_attr,
+  html_children,
+  html_nodes,
+  html_table,
+  html_text
+)
+importFrom(stats,runif)
+importFrom(stringr,
+  str_extract,
+  str_replace,
+  str_split,
+  str_sub,
+  str_trim,
+  str_which
+)
 importFrom(utils,tail)
 importFrom(xml2,read_html)

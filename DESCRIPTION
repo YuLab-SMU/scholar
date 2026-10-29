@@ -1,7 +1,7 @@
 Package: scholar
 Type: Package
 Title: Analyse Citation Data from Google Scholar
-Version: 1.0.0.001
+Version: 1.0.0.002
 Authors@R: c(
     person("Guangchuang", "Yu",   email = "guangchuangyu@gmail.com",   role = c("aut", "cre"), comment = c(ORCID = "0000-0002-6485-8781")),
     person("James", "Keirstead",  email = "james.keirstead@gmail.com", role = "aut"),
@@ -25,6 +25,7 @@ Imports:
     httr,
     rlang,
     rvest,
+    stats,
     stringr,
     xml2,
     tidygraph,
@@ -37,6 +38,7 @@ Suggests:
     roxygen2,
     spelling,
     testthat (>= 2.1.0),
+    withr,
     yulab.utils
 VignetteBuilder: quarto
 License: MIT + file LICENSE
@@ -44,4 +46,4 @@ URL: https://github.com/YuLab-SMU/scholar
 BugReports: https://github.com/YuLab-SMU/scholar/issues
 Encoding: UTF-8
 Language: en-GB
-Config/roxygen2/version: 8.0.0
+Config/roxygen2/version: 8.1.1

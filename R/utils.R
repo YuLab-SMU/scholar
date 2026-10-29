@@ -54,36 +54,217 @@ get_scholar_resp <- function(url, attempts_left = 5) {
 
     stopifnot(attempts_left > 0)
 
-    resp <- scholar_get(url, handle = scholar_handle())
+    for (attempt in seq_len(attempts_left)) {
 
-    # On a successful GET, return the response
-    if (httr::status_code(resp) == 200) {
-        resp
-    } else if (httr::status_code(resp) == 404) {
-        if (attempts_left == 1) {
-            warning("Page 404. Please check whether the provided URL is correct.")
+        resp <- scholar_get(url, handle = scholar_handle())
+        status <- status_code_or_zero(resp)
+
+        # On a successful GET, return the response
+        if (status == 200 && !is_scholar_interstitial(resp)) {
+            return(resp)
+        }
+
+        # Google Scholar itself told us to go away; the reason decides whether
+        # trying again can possibly help.
+        if (status == 404) {
+            if (attempt == attempts_left) {
+                warn_scholar(paste0(
+                    "Page 404. Please check whether the provided URL is correct."
+                ))
+                return(NULL)
+            }
+            scholar_sleep(scholar_backoff_delay(attempt))
+            next
+        }
+
+        if (status == 429) {
+            delay <- scholar_backoff_delay(attempt, retry_after = scholar_retry_after(resp))
+            if (!is.finite(delay) || attempt == attempts_left) {
+                warn_scholar(paste0(
+                    "Google Scholar is rate limiting this connection (HTTP 429).",
+                    "\n  Try again later, spread requests over time with ",
+                    "options(scholar_request_delay = 1), or fetch from a ",
+                    "different IP address."
+                ))
+                return(NULL)
+            }
+            scholar_sleep(delay)
+            next
+        }
+
+        if (status %in% c(401L, 403L) || is_scholar_interstitial(resp)) {
+            warn_scholar(scholar_blocked_message(resp, status))
             return(NULL)
         }
-        scholar_sleep(1)
-        get_scholar_resp(url, attempts_left - 1)
-    } else if(httr::status_code(resp) == 429){
-        warning("Response code 429. Google is rate limiting you for making too many requests too quickly.")
-        return(NULL)
-    } else if (attempts_left == 1) { # When attempts run out, stop with an error
-        warning("Cannot connect to Google Scholar. Is the ID you provided correct?")
-        return(NULL)
-    } else { # Otherwise, sleep a second and try again
-        scholar_sleep(1)
-        get_scholar_resp(url, attempts_left - 1)
+
+        if (attempt == attempts_left) { # When attempts run out, stop with a warning
+            warn_scholar(paste0(
+                "Google Scholar did not return data (HTTP ", status, "). ",
+                "Check that the ID is correct, then see ?scholar for the ",
+                "reasons Scholar refuses a request."
+            ))
+            return(NULL)
+        }
+        scholar_sleep(scholar_backoff_delay(attempt))
     }
+
+    NULL
+}
+
+##' @importFrom httr status_code
+status_code_or_zero <- function(resp) {
+    status <- tryCatch(httr::status_code(resp), error = function(e) NA_integer_)
+    if (is.null(status) || is.na(status)) return(-1L)
+    as.integer(status)
+}
+
+#' Does this response look like a Scholar page, or a Google refusal page?
+#'
+#' Scholar answers a refused request by redirecting it to a Google sign-in page
+#' or to `google.com/sorry` (a captcha), both of which arrive as HTTP 200 with
+#' a body full of markup that looks nothing like data. Following the redirect
+#' is what `httr` does by default, so the final URL is the reliable signal.
+#'
+#' @param resp an httr response, as returned by [httr::GET()]
+#' @return `TRUE` if the response is a login or captcha interstitial
+#' @noRd
+is_scholar_interstitial <- function(resp) {
+    url <- scholar_response_url(resp)
+    if (!nzchar(url)) return(FALSE)
+    grepl("accounts\\.google\\.com", url) ||
+        grepl("/sorry/", url) ||
+        grepl("ServiceLogin", url) ||
+        grepl("SIGNIN\\?", url)
+}
+
+scholar_response_url <- function(resp) {
+    if (!is.list(resp) || is.null(resp$url)) return("")
+    url <- resp$url
+    if (!is.character(url) || length(url) != 1 || is.na(url)) return("")
+    url
+}
+
+#' The HTTP status Google Scholar asked us to wait for, in seconds
+#'
+#' @param resp an httr response
+#' @return a numeric scalar, or `NA` when the header is absent
+#' @noRd
+scholar_retry_after <- function(resp) {
+    header <- tryCatch(httr::headers(resp)[["retry-after"]], error = function(e) NULL)
+    if (is.null(header)) return(NA_real_)
+    suppressWarnings(as.numeric(header))
+}
+
+scholar_blocked_message <- function(resp, status) {
+    url <- scholar_response_url(resp)
+    sign_in <- grepl("accounts\\.google\\.com", url) || grepl("SIGNIN\\?", url) ||
+        grepl("ServiceLogin", url)
+    captcha <- grepl("/sorry/", url)
+    if (sign_in) {
+        lead <- "Google Scholar redirected to a Google sign-in page, which means
+            this endpoint now requires an authenticated session."
+    } else if (captcha) {
+        lead <- "Google Scholar answered with its captcha page (google.com/sorry)
+            instead of data."
+    } else {
+        lead <- paste0("Google Scholar refused the request (HTTP ", status, ").")
+    }
+    paste0(lead, "\n",
+        "  This is what happens when requests come from an IP that Google does not\n",
+        "  trust, typically a hosted application or a CI runner, and it is not a\n",
+        "  problem with the ID or the URL. Retry from a workstation, point the\n",
+        "  package at a mirror with set_scholar_mirror(), or reuse a browser\n",
+        "  session as described in ?scholar.")
+}
+
+warn_scholar <- function(message) {
+    warning(message, call. = FALSE)
 }
 
 scholar_get <- function(url, handle) {
-    httr::GET(url, handle = handle)
+    delay <- scholar_numeric_option("scholar_request_delay", "SCHOLAR_REQUEST_DELAY", 0)
+    if (delay > 0) scholar_sleep(delay)
+    httr::GET(url, scholar_headers(), handle = handle)
 }
 
 scholar_sleep <- function(time) {
     Sys.sleep(time)
+}
+
+#' Request headers sent to Google Scholar
+#'
+#' Scholar rejects a request whose `User-Agent` announces a library rather than
+#' a browser, so the package always sends browser-like headers. Both can be
+#' overridden, see [scholar][scholar-package].
+#'
+#' @return a list of httr configuration objects
+#' @noRd
+#' @importFrom httr user_agent add_headers
+scholar_headers <- function() {
+    list(
+        httr::user_agent(scholar_user_agent()),
+        httr::add_headers(
+            Accept = paste("text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8"),
+            `Accept-Language` = scholar_accept_language()
+        )
+    )
+}
+
+scholar_user_agent <- function() {
+    default <- "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36"
+    scholar_option("scholar_user_agent", "SCHOLAR_USER_AGENT", default)
+}
+
+scholar_accept_language <- function() {
+    scholar_option("scholar_accept_language", "SCHOLAR_ACCEPT_LANGUAGE", "en-US,en;q=0.9")
+}
+
+#' Read a scholar option, falling back to an environment variable
+#'
+#' @param option name of the option, e.g. `"scholar_user_agent"`
+#' @param envvar name of the equivalent environment variable
+#' @param default value used when neither is set to a non-empty string
+#' @return a character scalar
+#' @noRd
+scholar_option <- function(option, envvar, default) {
+    value <- getOption(option, Sys.getenv(envvar, unset = ""))
+    if (is.character(value) && length(value) == 1 && nzchar(value) && !is.na(value)) {
+        return(value)
+    }
+    default
+}
+
+#' How long to wait before the next attempt at a Scholar request
+#'
+#' Waits grow geometrically from `options(scholar_retry_delay)` (1 second by
+#' default) up to `options(scholar_retry_max_delay)` (30 seconds), with a
+#' random fraction added so that a fleet of CI jobs does not come back in sync.
+#' A `Retry-After` header from Scholar is honoured, but when Google asks for
+#' longer than the maximum delay the result is `Inf`: waiting is pointless.
+#'
+#' @param attempt the number of the attempt just made, starting at 1
+#' @param retry_after value of the `Retry-After` header, or `NA`
+#' @return seconds to wait, or `Inf` when the request should be abandoned
+#' @noRd
+#' @importFrom stats runif
+scholar_backoff_delay <- function(attempt, retry_after = NA_real_) {
+    base <- scholar_numeric_option("scholar_retry_delay", "SCHOLAR_RETRY_DELAY", 1)
+    cap <- scholar_numeric_option("scholar_retry_max_delay", "SCHOLAR_RETRY_MAX_DELAY", 30)
+    if (is.finite(retry_after) && retry_after > 0) {
+        return(if (retry_after > cap) Inf else retry_after)
+    }
+    attempt <- max(1L, as.integer(attempt))
+    delay <- base * 2^(attempt - 1L)
+    jitter <- suppressWarnings(stats::runif(1, min = 0, max = 0.25 * delay))
+    min(delay + jitter, cap)
+}
+
+scholar_numeric_option <- function(option, envvar, default) {
+    value <- suppressWarnings(as.numeric(getOption(option, Sys.getenv(envvar, unset = ""))))
+    if (length(value) == 1 && is.finite(value) && value >= 0) {
+        return(value)
+    }
+    default
 }
 
 # GB: Add this function to R/utils.R, right after get_scholar_resp() to fix

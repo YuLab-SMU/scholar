@@ -1,4 +1,8 @@
-# scholar 1.0.0.001
+# scholar 1.0.0.002
+
++ send browser-like headers to Google Scholar and recognise the sign-in, captcha and 403 pages it returns when it refuses a client, so a blocked request now names the reason instead of blaming the ID (2026-10-29, Thu, jkeirstead#123)
++ back off exponentially before retrying a rate-limited request, honour Scholar's `Retry-After` header, and give up when Google asks for longer than the budget allows (2026-10-29, Thu, jkeirstead#123)
++ add the `scholar_user_agent`, `scholar_accept_language`, `scholar_request_delay`, `scholar_retry_delay` and `scholar_retry_max_delay` options, each falling back to an environment variable of the same name in upper case (2026-10-29, Thu)
 
 + fix `get_scholar_id()` aborting with "object 'aa' not found" when Google Scholar refuses the connection, so that it now reports that no ID was found and returns `NA` (2026-10-28, Wed)
 
