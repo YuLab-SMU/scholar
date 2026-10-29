@@ -69,14 +69,43 @@ test_that("a Scholar ID option falls back to its environment variable", {
     expect_match(scholar:::scholar_user_agent(), "Mozilla")
 })
 
-test_that("sign-in and captcha interstitials are recognised", {
-    expect_true(scholar:::is_scholar_interstitial(
-        scholar_response(200, "https://accounts.google.com/v3/signin/identifier?continue=x")))
-    expect_true(scholar:::is_scholar_interstitial(
-        scholar_response(200, "https://www.google.com/sorry/index?continue=x")))
-    expect_false(scholar:::is_scholar_interstitial(
+test_that("the reason for a refusal is named correctly", {
+    expect_equal(scholar:::scholar_block_type(
+        scholar_response(200, "https://accounts.google.com/v3/signin/identifier?continue=x")),
+        "sign-in")
+    expect_equal(scholar:::scholar_block_type(
+        scholar_response(200, "https://www.google.com/sorry/index?continue=x")), "captcha")
+    ## a page that carries data, and a plain 403, are not captcha cases: the
+    ## status code decides those
+    expect_null(scholar:::scholar_block_type(
         scholar_response(200, "https://scholar.google.com/citations?user=abc")))
-    expect_false(scholar:::is_scholar_interstitial(scholar_response(200)))
+    expect_null(scholar:::scholar_block_type(
+        scholar_response(403, "https://scholar.google.com/scholar")))
+})
+
+test_that("the advice matches the cause and carries no stray indentation", {
+    ## a newline in the middle of a message would be followed by the source's
+    ## own indentation, which reads as broken output
+    no_indent <- function(txt) expect_false(grepl("\n    [^ ]", txt))
+
+    sign_in <- scholar:::scholar_blocked_message(
+        scholar_response(200, "https://accounts.google.com/Login"), 200, "sign-in")
+    expect_match(sign_in, "sign-in page")
+    no_indent(sign_in)
+
+    js_captcha <- scholar:::scholar_blocked_message(
+        scholar_response(200, "https://scholar.google.com/scholar?cites=1"),
+        200, "captcha-page")
+    expect_match(js_captcha, "needs JavaScript")
+    ## a page served from Scholar's own host must not be blamed on google.com/sorry
+    expect_false(grepl("google.com/sorry", js_captcha, fixed = TRUE))
+    expect_match(js_captcha, "set_scholar_cookie")
+    no_indent(js_captcha)
+
+    refused <- scholar:::scholar_blocked_message(
+        scholar_response(403, "https://scholar.google.com/scholar"), 403, NULL)
+    expect_match(refused, "HTTP 403")
+    no_indent(refused)
 })
 
 test_that("get_scholar_resp does not retry a request Scholar sent to sign-in", {

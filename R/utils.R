@@ -169,22 +169,6 @@ status_code_or_zero <- function(resp) {
     as.integer(status)
 }
 
-#' Does this response look like a Scholar page, or a Google refusal page?
-#'
-#' Scholar answers a refused request by redirecting it to a Google sign-in page
-#' or to `google.com/sorry` (a captcha), both of which arrive as HTTP 200 with
-#' a body full of markup that looks nothing like data. Following the redirect
-#' is what `httr` does by default, so the final URL is the reliable signal.
-#'
-#' @param resp an httr response, as returned by [httr::GET()]
-#' @return `TRUE` if the response is a login or captcha interstitial
-#' @noRd
-is_scholar_interstitial <- function(resp) {
-    url <- scholar_response_url(resp)
-    if (!nzchar(url)) return(FALSE)
-    scholar_sign_in_url(url) || scholar_captcha_url(url)
-}
-
 ## Anchored on the host and path, because Scholar's own URLs carry a
 ## `continue=` parameter that quotes the address Google redirected from.
 scholar_sign_in_url <- function(url) {

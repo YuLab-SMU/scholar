@@ -1,4 +1,6 @@
-# scholar 1.0.0.008
+# scholar 1.0.0.009
+
++ name the captcha that Scholar serves from its own host as what it is, so the advice no longer blames `google.com/sorry` for a page that never redirected there, and drop the indentation that leaked into the middle of the warning (2026-10-29, Thu)
 
 + document what to do when Scholar refuses a request: the README and the vignette now name the four ways out, list every setting the package reads, and explain why author search and the cited-by list come back empty on a server (2026-10-29, Thu, jkeirstead#123, jkeirstead#91)
 
