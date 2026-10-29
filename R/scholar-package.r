@@ -82,6 +82,10 @@
 #'       present, see \code{\link{set_scholar_cookie}}. Entries from the option
 #'       win over entries of the same name in the file. Prefer the environment
 #'       variable, since an option value can end up in the command history.
+#'     \item \code{scholar_scimago_url} (\code{SCHOLAR_SCIMAGO_URL}): source of
+#'       the SCImago journal ranking table, either a URL or a file saved from a
+#'       browser. When set it is the only source tried; otherwise the live
+#'       export is fetched and an archived copy is used if SCImago refuses.
 #'     \item \code{scholar_timeout} (\code{SCHOLAR_TIMEOUT}): seconds a single
 #'       request may take before it is abandoned. Default 30.
 #'     \item \code{scholar_degraded}: set to \code{FALSE} to stop the notice

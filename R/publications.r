@@ -455,9 +455,82 @@ get_journalrank <- function(journals, max.distance = 0.05) {
     get_journal_stats(journals, max.distance, myjournalrankings, col = "Title")
 }
 
-download_scimagojr_rankings <- function(url = "https://www.scimagojr.com/journalrank.php?out=xls") {
-    resp <- httr::GET(
-        url,
+## SCImago put journalrank.php behind a JavaScript challenge at the end of 2025,
+## so a request from a script is now answered with HTTP 403 even though the page
+## opens in a browser. The table is still published, so the sources tried here
+## are the live export, a replay of the same export kept by the Internet
+## Archive, and anything named by options(scholar_scimago_url), which may also be
+## a file saved by hand from a browser.
+scimagojr_official_url <- "https://www.scimagojr.com/journalrank.php?out=xls"
+
+## Pinned to the newest capture that still returns the table; `latest` resolves
+## to a 403 capture instead. Refresh it with:
+## https://web.archive.org/cdx/search/cdx?url=scimagojr.com%2Fjournalrank.php%3Fout%3Dxls&fl=timestamp,statuscode&filter=statuscode:200&limit=-1
+scimagojr_snapshot <- "20251026083950"
+
+scimagojr_snapshot_url <- function(snapshot = scimagojr_snapshot) {
+    paste0("https://web.archive.org/web/", snapshot, "id_/", scimagojr_official_url)
+}
+
+scimagojr_sources <- function(url = NULL) {
+    configured <- url %||%
+        getOption("scholar_scimago_url", Sys.getenv("SCHOLAR_SCIMAGO_URL", unset = ""))
+    if (is.character(configured) && !any(is.na(configured))) {
+        configured <- configured[nzchar(configured)]
+    } else {
+        configured <- character(0)
+    }
+    ## A source the user named is the source they want: it is not followed by
+    ## the defaults, which would quietly pull an eleven megabyte table over a
+    ## mirror or a local file they meant to be the only answer.
+    if (length(configured)) return(configured)
+    c(scimagojr_official_url, scimagojr_snapshot_url())
+}
+
+download_scimagojr_rankings <- function(url = NULL) {
+    sources <- scimagojr_sources(url)
+    reasons <- character(0)
+
+    for (source in sources) {
+        txt <- read_scimagojr_table(source)
+        if (is.null(txt)) {
+            reasons <- c(reasons, paste0("  - ", source, ": could not be read"))
+            next
+        }
+        ## Some proxies serve the challenge page with HTTP 200, so the body says
+        ## whether this really is the ranking table.
+        if (!grepl("^Rank[;,]", txt)) {
+            reasons <- c(reasons, paste0("  - ", source, ": not the ranking table"))
+            next
+        }
+        if (grepl("^https?://web\\.archive\\.org", source)) {
+            message("scholar: using an Internet Archive snapshot of the SCImago ",
+                    "ranking table, taken ", substr(source, 30, 39),
+                    ". Set options(scholar_scimago_url) to a newer source, or to a ",
+                    "file exported from SCImago by hand.")
+        }
+        con <- textConnection(txt)
+        on.exit(close(con), add = TRUE)
+        return(utils::read.csv2(con, stringsAsFactors = FALSE, check.names = FALSE))
+    }
+
+    stop("SCImago journal rankings could not be downloaded from any source:\n",
+         paste(reasons, collapse = "\n"), "\n",
+         "  SCImago serves a JavaScript challenge to scripts; open ",
+         scimagojr_official_url, " in a browser, save the table, and pass it with\n",
+         "  options(scholar_scimago_url = \"path/to/scimagojr.csv\") or as the `url`",
+         " argument of download_scimagojr_rankings().", call. = FALSE)
+}
+
+##' Read one SCImago source, which may be a URL or a file saved by hand
+##' @noRd
+read_scimagojr_table <- function(source) {
+    if (!grepl("^https?://", source)) {
+        if (!file.exists(source)) return(NULL)
+        return(paste(readLines(source, warn = FALSE), collapse = "\n"))
+    }
+    resp <- tryCatch(httr::GET(
+        source,
         httr::user_agent(paste(
             "Mozilla/5.0 (Windows NT 10.0; Win64; x64)",
             "AppleWebKit/537.36 (KHTML, like Gecko)",
@@ -466,14 +539,11 @@ download_scimagojr_rankings <- function(url = "https://www.scimagojr.com/journal
         httr::add_headers(
             Accept = "text/csv,application/vnd.ms-excel,*/*",
             Referer = "https://www.scimagojr.com/journalrank.php"
-        )
-    )
-    httr::stop_for_status(resp, "download SCImago journal rankings")
-
-    txt <- httr::content(resp, as = "text", encoding = "UTF-8")
-    con <- textConnection(txt)
-    on.exit(close(con), add = TRUE)
-    utils::read.csv2(con, stringsAsFactors = FALSE, check.names = FALSE)
+        ),
+        httr::timeout(120)
+    ), error = function(e) NULL)
+    if (is.null(resp) || httr::status_code(resp) >= 400) return(NULL)
+    httr::content(resp, as = "text", encoding = "UTF-8")
 }
 
 

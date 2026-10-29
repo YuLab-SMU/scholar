@@ -1,4 +1,6 @@
-# scholar 1.0.0.005
+# scholar 1.0.0.006
+
++ `get_journalrank()` falls back to an archived copy of the SCImago table and accepts a source of your own, because SCImago now answers a script with a JavaScript challenge and the live export cannot be read at all (2026-10-29, Thu)
 
 + add `get_citing_articles()`, which lists the works Google Scholar cites a publication with — the "who cites it, and where" that jkeirstead#4 and jkeirstead#107 asked for, and what a citation count on its own cannot answer (2026-10-29, Thu, jkeirstead#4, jkeirstead#107)
 + recognise the captcha page Scholar serves from its own host with HTTP 200, so a refused request is reported as a refusal instead of looking like a publication that nothing cites (2026-10-29, Thu, jkeirstead#123)
