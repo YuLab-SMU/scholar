@@ -110,7 +110,17 @@ h_index_from_histories <- function(histories) {
 
     awarded <- tapply(rows$cites, list(as.character(rows$year), rows$pubid), sum)
     awarded[is.na(awarded)] <- 0
+
+    ## `apply()` returns a bare vector rather than a matrix whenever the result
+    ## has only one row or only one column, and both are ordinary cases here:
+    ## one row means every cited publication earned its citations in the same
+    ## year, which is what a new researcher looks like. Indexing that vector by
+    ## row then fails, so the shape is put back before anything uses it.
     accumulated <- apply(awarded, 2, cumsum)
+    if (is.null(dim(accumulated))) {
+        accumulated <- matrix(accumulated, nrow = nrow(awarded),
+                              dimnames = dimnames(awarded))
+    }
 
     years <- as.integer(rownames(accumulated))
     h_index <- vapply(seq_len(nrow(accumulated)), function(i) {

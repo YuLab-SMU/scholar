@@ -81,3 +81,29 @@ test_that("histories are cached, so a second call makes no request", {
     expect_equal(calls, 1)
     expect_equal(first$h_index, second$h_index)
 })
+
+test_that("one publication is a history too", {
+    out <- scholar:::h_index_from_histories(
+        list(data.frame(year = 2018:2020, cites = c(1, 2, 3), pubid = "a")))
+    expect_equal(out$year, 2018:2020)
+    expect_equal(out$h_index, c(1L, 1L, 1L))
+    expect_equal(out$citations, c(1L, 3L, 6L))
+})
+
+test_that("papers that all earned their citations in one year work", {
+    ## `apply()` would hand back a bare vector here, so this is the case that
+    ## used to stop with "argument must be coercible to non-negative integer"
+    out <- scholar:::h_index_from_histories(list(
+        data.frame(year = 2026, cites = 5, pubid = "a"),
+        data.frame(year = 2026, cites = 2, pubid = "b")))
+    expect_equal(nrow(out), 1)
+    expect_equal(out$year, 2026L)
+    expect_equal(out$h_index, 2L)
+    expect_equal(out$citations, 7L)
+})
+
+test_that("a single paper in a single year works", {
+    out <- scholar:::h_index_from_histories(
+        list(data.frame(year = 2026, cites = 9, pubid = "only")))
+    expect_equal(out, data.frame(year = 2026L, h_index = 1L, citations = 9L))
+})

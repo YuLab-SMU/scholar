@@ -1,4 +1,6 @@
-# scholar 1.0.0.015
+# scholar 1.0.0.016
+
++ make `get_h_index_history()` work for a scholar whose cited papers all earned their citations in the same year, and for a single cited paper: accumulating a one-row or one-column table made `apply()` return a bare vector, which then failed on row indexing, so the function errored out for exactly the people it is most useful to (2026-10-29, Thu, jkeirstead#73)
 
 + cap the total time one process will spend waiting for a rate-limited Scholar (`scholar_retry_budget`, 60 seconds by default): past that a refused request is abandoned at once, because a CI job that keeps waiting on a refusing IP only lengthens its own lockout — the polite backoff added this week turned a blocked check run from three minutes into eighteen (2026-10-29, Thu)
 
