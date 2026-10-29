@@ -42,16 +42,19 @@ history Google truncates contributes only the years it publishes.
 
 The h-index in a given year is counted from the citations accumulated up to
 and including that year, which is what the number means on a profile today.
+The result is a plain data frame, so plotting the trajectory is one ggplot2
+call away (\code{geom_step(direction = "hv")} suits a step function); the
+package vignette carries the worked example.
 }
 \examples{
 \donttest{
-  history <- get_h_index_history("B7vSqZsAAAAJ", delay = 1)
-  head(history)
-
-  ggplot(history, aes(year, h_index)) +
-    geom_line() +
-    geom_point() +
-    labs(x = NULL, y = "h-index")
+  pubs <- get_publications("B7vSqZsAAAAJ")
+  # Scholar may refuse the list outright, answering with NA
+  if (is.data.frame(pubs) && nrow(pubs)) {
+    # one request per publication, so start from the few that matter
+    few <- head(pubs[pubs$cites > 0, c("pubid", "cites")], 3)
+    head(get_h_index_history("B7vSqZsAAAAJ", publications = few))
+  }
 }
 }
 \seealso{

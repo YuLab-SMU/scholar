@@ -41,8 +41,12 @@
 ##' @examples
 ##' \donttest{
 ##'   pubs <- get_publications("B7vSqZsAAAAJ")
-##'   get_citing_articles("B7vSqZsAAAAJ", pubs$pubid[1], publications = pubs,
-##'                       max_pages = 1)
+##'   # Scholar can refuse the list outright, in which case there is nothing to
+##'   # expand: get_publications() answers with NA rather than an empty table
+##'   if (is.data.frame(pubs) && nrow(pubs)) {
+##'     get_citing_articles("B7vSqZsAAAAJ", pubs$pubid[1], publications = pubs,
+##'                         max_pages = 1)
+##'   }
 ##' }
 ##' @importFrom stringr str_trim str_extract
 ##' @importFrom rvest html_nodes html_attr html_text
