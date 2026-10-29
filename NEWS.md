@@ -1,4 +1,6 @@
-# scholar 1.0.0.017
+# scholar 1.0.0.018
+
++ report a captcha page served from Scholar's own host as that, instead of describing it as a redirect to google.com/sorry which never happened: the body-level captcha now has its own type, and a plain non-200 status no longer reaches `switch()` with a NULL selector (2026-10-29, Thu, jkeirstead#123)
 
 + cache only a citation history that carries years, so one refused request no longer freezes a publication as permanently uncited and silently lowers the h-index of every year it belongs to (2026-10-29, Thu, jkeirstead#73)
 
@@ -13,7 +15,7 @@
 + add `search_openalex_authors()`, which finds authors and their h-index and i10-index in OpenAlex — the route that needs no session, since Google now signs in every anonymous author search (2026-10-29, Thu, jkeirstead#91)
 + deprecate `get_scholar_id()` and `search_scholar_ids()` for anonymous use, in the docs and in what they report, so an empty result no longer reads as a person who does not exist (2026-10-29, Thu, jkeirstead#91)
 
-+ name the captcha that Scholar serves from its own host as what it is, so the advice no longer blames `google.com/sorry` for a page that never redirected there, and drop the indentation that leaked into the middle of the warning (2026-10-29, Thu)
++ tell the two captcha pages apart: one is a redirect to Google's challenge host, the other is served from Scholar itself, and the second is no longer described as a redirect that never happened. The earlier entry claiming this was fixed was written against a patch that never landed, and is corrected here (2026-10-29, Thu)
 
 + document what to do when Scholar refuses a request: the README and the vignette now name the four ways out, list every setting the package reads, and explain why author search and the cited-by list come back empty on a server (2026-10-29, Thu, jkeirstead#123, jkeirstead#91)
 

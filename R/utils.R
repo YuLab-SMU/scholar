@@ -252,9 +252,15 @@ scholar_retry_after <- function(resp) {
 
 #' What stopped this response from being data, if anything
 #'
+#' The two captcha cases are kept apart because the advice differs: one is a
+#' redirect to Google's challenge host, the other is a page served from Scholar
+#' itself, and telling a user to look for a redirect that never happened is
+#' what this distinction is here to prevent.
+#'
 #' @param resp an httr response
 #' @param status its HTTP status
-#' @return \code{"sign-in"}, \code{"captcha"}, \code{"no-data"}, or \code{NULL}
+#' @return \code{"sign-in"}, \code{"captcha"}, \code{"captcha-page"}, or
+#'   \code{NULL} when the response does carry data
 #' @noRd
 scholar_block_type <- function(resp, status = status_code_or_zero(resp)) {
     url <- scholar_response_url(resp)
@@ -264,26 +270,25 @@ scholar_block_type <- function(resp, status = status_code_or_zero(resp)) {
     ## captcha that needs JavaScript, which is what a script cannot clear. The
     ## markup of a page that does carry data is checked first so that this
     ## cannot turn a real answer into a refusal.
-    if (status == 200 && scholar_captcha_body(resp)) return("captcha")
+    if (status == 200 && scholar_captcha_body(resp)) return("captcha-page")
     NULL
 }
 
 scholar_blocked_message <- function(resp, status, type = NULL) {
     type <- type %||% scholar_block_type(resp, status)
-    sign_in <- identical(type, "sign-in")
-    captcha <- identical(type, "captcha")
-    if (sign_in) {
-        lead <- "Google Scholar redirected to a Google sign-in page, which means
-            this endpoint now requires an authenticated session."
-    } else if (captcha) {
-        lead <- "Google Scholar answered with its captcha page (google.com/sorry)
-            instead of data."
-    } else if (identical(type, "http403") || status %in% c(401L, 403L)) {
-        lead <- paste0("Google Scholar refused the request (HTTP ", status, ").")
-    } else {
-        lead <- "Google Scholar returned a captcha page that needs JavaScript, "
-        lead <- paste0(lead, "so the response contains no data.")
-    }
+    ## `switch()` refuses a NULL selector, which is what a plain non-200 status
+    ## produces: nothing in the response identifies a refusal shape, only the
+    ## status code does.
+    if (is.null(type)) type <- "refused"
+    lead <- switch(type,
+        "sign-in" = paste0("Google Scholar redirected to a Google sign-in page, ",
+                           "so this endpoint needs an authenticated session."),
+        "captcha" = paste0("Google Scholar redirected to its captcha page ",
+                           "(google.com/sorry) instead of returning data."),
+        "captcha-page" = paste0("Google Scholar returned a page that asks a ",
+                                "browser to prove it is not a robot, so the ",
+                                "response carries no data."),
+        paste0("Google Scholar refused the request (HTTP ", status, ")."))
     paste0(lead, "\n",
         "  This is what happens when requests come from an IP that Google does not\n",
         "  trust, typically a hosted application or a CI runner, and it is not a\n",
