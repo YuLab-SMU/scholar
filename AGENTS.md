@@ -51,6 +51,24 @@ issue 号：本仓库直接写 `#N`；上游 `jkeirstead/scholar` 必须写 `jke
 6. `make rd` 会把 `NAMESPACE` 重排成多行 `importFrom(...)` 并抬 `Config/roxygen2/version`——
    这是 roxygen 8.1.1 的正常噪声，别当成别人的改动。
 
+## `make check` 的实测耗时（2026-10-29，同一台机器）
+
+| 网络状况 | 有无 `scholar_retry_budget` | 全量 check |
+|---|---|---|
+| 通畅 | — | 约 **3 分钟** |
+| 被 429 | 无（1.0.0.013） | **18 分 16 秒** |
+| 被 429 | 60 秒预算（1.0.0.014） | **4 分 8 秒**，`0 errors / 0 warnings / 0 notes` |
+
+也就是说：退避策略本身会把"被封 IP"这件事放大成 CI 变慢；预算（跨整个进程累计，超了立刻放弃）是必要的上限，别只看单次退避是否礼貌。
+
+## 联网验证的现状与做法
+
+- 截至 2026-10-29，本机出口 IP 被 Scholar **持续 429**：`get_publications()` 直接返回 NA。
+  因此 `get_citing_articles()` 与 `get_h_index_history()` 的**端到端取数在这一 IP 上尚未演示成功**；
+  两者的解析/算法层分别用**真实结果页 fixture** 与**不变量测试**（逐年累计、单调不减、缓存只请求一次）覆盖。
+- 要补端到端验证：换住宅 IP，或导出浏览器 session 后 `export SCHOLAR_COOKIE_FILE=…/cookies.txt`，
+  再用 `delay` 与小样本（`publications = head(..., 3)`）跑一次；不要把大范围 live 请求当开发反馈。
+
 ## 测试资产
 
 - `tests/testthat/fixtures/citing-page.html`：**真实** Scholar 结果页的裁剪样本（两行结果）。

@@ -1,4 +1,4 @@
-# scholar 1.0.0.014
+# scholar 1.0.0.015
 
 + cap the total time one process will spend waiting for a rate-limited Scholar (`scholar_retry_budget`, 60 seconds by default): past that a refused request is abandoned at once, because a CI job that keeps waiting on a refusing IP only lengthens its own lockout — the polite backoff added this week turned a blocked check run from three minutes into eighteen (2026-10-29, Thu)
 
