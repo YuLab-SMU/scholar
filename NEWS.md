@@ -1,4 +1,9 @@
-# scholar 1.0.0.003
+# scholar 1.0.0.004
+
++ add `set_scholar_cookie()` and the `scholar_cookie` / `scholar_cookie_file` settings, so a session exported from a browser can be presented to the endpoints Google now signs in first (2026-10-29, Thu, jkeirstead#91)
++ make the browser headers actually reach the request: `httr` silently discards a list of settings passed as a single argument, so the request went out as `libcurl` after all (2026-10-29, Thu, jkeirstead#123)
++ explain a Scholar refusal when author search comes back empty, from `get_scholar_id()` and `search_scholar_ids()`, instead of reporting a bare "No Scholar ID found." (2026-10-29, Thu)
++ state sign-in, captcha and rate-limit refusals once per session rather than on every request, and give each request a 30 second timeout (2026-10-29, Thu)
 
 + stop `get_profile()` reporting the publication sort links of a profile as its coauthors, which happened on every profile that lists no colleagues (2026-10-29, Thu)
 

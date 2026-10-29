@@ -23,6 +23,7 @@ test_that("get_scholar_resp retries transient 404 responses", {
 })
 
 test_that("get_scholar_resp warns after final 404 attempt", {
+    withr::local_options(list(scholar_warned = NULL))
   fake_get <- function(url, handle) {
     structure(list(status_code = 404L), class = "response")
   }
@@ -79,6 +80,7 @@ test_that("sign-in and captcha interstitials are recognised", {
 })
 
 test_that("get_scholar_resp does not retry a request Scholar sent to sign-in", {
+    withr::local_options(list(scholar_warned = NULL))
     calls <- 0
     fake_get <- function(url, handle) {
         calls <<- calls + 1
@@ -103,6 +105,7 @@ test_that("get_scholar_resp does not retry a request Scholar sent to sign-in", {
 })
 
 test_that("a 403 is reported as blocked instead of a wrong ID", {
+    withr::local_options(list(scholar_warned = NULL))
     with_mocked_bindings(
         scholar_get = function(url, handle) scholar_response(403, "https://scholar.google.com/scholar"),
         scholar_handle = function() NULL,
@@ -142,6 +145,7 @@ test_that("rate limited requests are retried with a growing delay", {
 })
 
 test_that("a Retry-After longer than the budget abandons the request", {
+    withr::local_options(list(scholar_warned = NULL))
     calls <- 0
     with_mocked_bindings(
         scholar_get = function(url, handle) {
@@ -174,4 +178,31 @@ test_that("backoff grows, is capped, and obeys Retry-After", {
     expect_lt(scholar:::scholar_backoff_delay(1, retry_after = NA_real_), 2)
     # a wait Google asks for beyond the budget means retrying is pointless
     expect_identical(scholar:::scholar_backoff_delay(1, retry_after = 3600), Inf)
+})
+
+test_that("the request settings reach httr as separate arguments", {
+    captured <- NULL
+    fake_get <- function(url = NULL, config = list(), ..., handle = NULL) {
+        captured <<- list(dots = list(...), config = config)
+        structure(list(status_code = 200L), class = "response")
+    }
+
+    withr::local_options(list(scholar_cookie = NULL, scholar_cookie_file = NULL))
+    withr::local_envvar(list(SCHOLAR_COOKIE = NA))
+    with_mocked_bindings(
+        GET = fake_get,
+        .package = "httr",
+        scholar:::scholar_get("https://scholar.google.com/citations?user=abc",
+                              handle = NULL)
+    )
+    ## httr drops a list of settings passed as a single argument, which sends
+    ## the default libcurl User-Agent that Scholar answers with HTTP 403.
+    settings <- captured$dots
+    expect_equal(length(settings), 3)
+    expect_true(all(vapply(settings, function(x) inherits(x, "request"), logical(1))))
+    agents <- unlist(lapply(settings, function(x) x$options$useragent))
+    expect_match(agents, "Mozilla")
+    expect_false(any(grepl("libcurl", agents)))
+    header_names <- names(settings[[2]]$headers)
+    expect_equal(header_names, c("Accept", "Accept-Encoding", "Accept-Language"))
 })

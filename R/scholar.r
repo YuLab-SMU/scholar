@@ -341,13 +341,17 @@ get_scholar_id <- function(last_name="", first_name="", affiliation = NA) {
   ## so the sign-in check after the loop used to die with
   ## "object 'aa' not found" instead of reporting that no ID was found.
   aa <- ""
+  refused <- FALSE
   for (q in queries) {
     mval <- q
     mval <- gsub('"', '%22', mval)
     mval <- gsub(' ', '+', mval)
     url <- paste0(site, '/citations?view_op=search_authors&mauthors=', mval, '&hl=en&oi=ao')
     page <- get_scholar_resp(url)
-    if (is.null(page)) next
+    if (is.null(page)) {
+        refused <- TRUE
+        next
+    }
     aa <- scholar_response_text(page)
     doc <- read_scholar_html(page)
     hrefs <- rvest::html_nodes(doc, css = ".gs_ai_name a") |> rvest::html_attr("href")
@@ -384,9 +388,8 @@ get_scholar_id <- function(last_name="", first_name="", affiliation = NA) {
   }
 
   if (length(ids) == 0) {
-    # Heuristic: detect sign-in/verification pages and give informative message
-    if (grepl("Sign into continue|I'm not a robot|verify", aa, ignore.case = TRUE)) {
-      message("Author search page requires sign-in/verification; cannot extract ID from this environment.")
+    if (refused || grepl("Sign into continue|I'm not a robot|verify", aa, ignore.case = TRUE)) {
+      scholar_refused()
     } else {
       message("No Scholar ID found.")
     }
@@ -454,12 +457,16 @@ search_scholar_ids <- function(name, max_pages = Inf, delay = 0) {
   pages <- 0
   seen_urls <- character(0)
   out <- list()
+  refused <- FALSE
   repeat {
     if (url %in% seen_urls) break
     seen_urls <- c(seen_urls, url)
 
     page <- get_scholar_resp(url)
-    if (is.null(page)) break
+    if (is.null(page)) {
+      refused <- TRUE
+      break
+    }
 
     doc <- read_scholar_html(page)
     parsed <- parse_scholar_id_search(doc, site)
@@ -474,6 +481,7 @@ search_scholar_ids <- function(name, max_pages = Inf, delay = 0) {
   }
 
   if (length(out) == 0) {
+    if (refused) scholar_refused()
     return(empty_scholar_id_search())
   }
 

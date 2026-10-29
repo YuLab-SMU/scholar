@@ -26,6 +26,22 @@ scholars and predicting h-index scores based on past publication records.
   Reusing these seems to help. If you wish to write your own code to interact
   with Google Scholar, we recommend that you use the
   \code{\link{get_scholar_resp}} function to carry out the query.
+
+  Some endpoints, author search among them, now want a session that only a
+  browser has. \code{\link{set_scholar_cookie}} hands that session to the
+  package: either paste the \code{Cookie} value from a browser that can open
+  the page, or point it at a file exported from one. Prefer the file: cookies
+  that begin with \code{#HttpOnly_} in a Netscape jar are the decisive ones,
+  and pasting a session into a script leaves it in your command history. The
+  package sends them itself as a \code{Cookie} header rather than leaving it
+  to \code{libcurl}, which discards exactly those \code{HttpOnly} rows.
+  A session expires with the browser session it came from, and Google ends it
+  sooner when it sees unusual use, so expect to refresh it.
+
+  None of this is a sanctioned API. Scholar's terms of service forbid
+  automated access, and using your own account's session puts that account's
+  Google access at risk of a challenge or suspension; a dedicated or
+  disposable account is the safer choice, and the risk stays with you.
 }
 
 \section{Requests are refused, rate limited or redirected}{
@@ -77,9 +93,18 @@ scholars and predicting h-index scores based on past publication records.
     \item \code{scholar_retry_delay} and \code{scholar_retry_max_delay}: the
       first wait and the ceiling for the exponentially growing wait before a
       retry. Defaults to 1 and 30 seconds.
+    \item \code{scholar_cookie} (\code{SCHOLAR_COOKIE}) and
+      \code{scholar_cookie_file} (\code{SCHOLAR_COOKIE_FILE}): the session to
+      present, see \code{\link{set_scholar_cookie}}. Entries from the option
+      win over entries of the same name in the file. Prefer the environment
+      variable, since an option value can end up in the command history.
+    \item \code{scholar_timeout} (\code{SCHOLAR_TIMEOUT}): seconds a single
+      request may take before it is abandoned. Default 30.
+    \item \code{scholar_degraded}: set to \code{FALSE} to stop the notice
+      that author search is being refused by Google, which otherwise appears
+      once per session.
     \item \code{scholar_call_home} and \code{scholar_handle}: whether to seed
-      a session, and the curl handle holding its cookies. Both are managed
-      for you.
+      a session, and the handle holding its cookies. Both are managed for you.
   }
 }
 
